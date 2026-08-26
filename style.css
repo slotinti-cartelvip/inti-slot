@@ -1,0 +1,206 @@
+/* ============================================================
+   INTI — ESTILOS
+   Paleta: azul marino, naranja y crema (con filo dorado)
+   ============================================================ */
+:root{
+  --laca:#0B1524;
+  --panel:#16263D;
+  --acero:#2B4265;
+  --neon:#FF7A18;
+  --oro:#E8B84B;
+  --crema:#F4EBD6;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  min-height:100vh;
+  background:radial-gradient(130% 90% at 50% 0%, #24405F 0%, var(--laca) 58%, #050B14 100%);
+  font-family:'Barlow Condensed',system-ui,sans-serif;
+  color:var(--crema);
+  display:flex;flex-direction:column;align-items:center;
+  padding:22px 12px 44px;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ---------- gabinete ---------- */
+.cabinet{
+  width:100%;max-width:620px;
+  background:linear-gradient(180deg,#1B2E49 0%, #101E31 45%, #0A1526 100%);
+  border:2px solid var(--acero);
+  border-radius:22px;
+  box-shadow:0 0 0 5px rgba(232,184,75,.09), 0 30px 64px rgba(0,0,0,.65);
+  padding:16px 16px 20px;
+}
+
+/* ---------- marquesina ---------- */
+.marquee{text-align:center;padding:8px 0 14px}
+.marquee .eyebrow{
+  font-size:10px;letter-spacing:.4em;font-weight:600;text-transform:uppercase;
+  color:rgba(244,235,214,.42);
+}
+.marquee h1{
+  font-family:'Bungee',cursive;
+  font-size:clamp(24px,6.5vw,36px);
+  margin-top:5px;
+  text-shadow:0 0 14px rgba(232,184,75,.55),0 0 36px rgba(255,122,24,.30),0 3px 0 #7A4A05;
+}
+.marquee .sub{
+  font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-top:3px;
+  color:rgba(232,184,75,.55);
+}
+
+/* ---------- tablero ---------- */
+.board{
+  background:linear-gradient(180deg,#0A1424 0%,#0E1B2E 100%);
+  border:3px solid var(--acero);
+  border-radius:14px;
+  padding:8px;
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6);
+}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+
+.cell{
+  aspect-ratio:1;
+  border-radius:9px;
+  background:rgba(255,255,255,.035);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.cell svg{width:78%;height:78%;display:block}
+
+.cell.nuevo{animation:caer .28s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes caer{from{transform:translateY(-46px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.cell.gana{animation:latir .34s ease-in-out 2}
+@keyframes latir{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+.cell.gana::before{
+  content:'';position:absolute;inset:0;border-radius:9px;
+  background:radial-gradient(circle,rgba(255,122,24,.42) 0%,transparent 70%);
+}
+
+.cell.sale{animation:estallar .3s ease-in forwards}
+@keyframes estallar{to{transform:scale(.25) rotate(22deg);opacity:0}}
+
+.cell.orbe{
+  background:radial-gradient(circle at 35% 30%, #FFD27A 0%, var(--neon) 45%, #8E3200 100%);
+  box-shadow:0 0 18px rgba(255,122,24,.65), inset 0 -4px 10px rgba(0,0,0,.35);
+}
+.cell.orbe .val{
+  font-family:'Bungee',cursive;
+  font-size:clamp(11px,2.9vw,17px);
+  color:#2B1200;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+.cell.scatter{
+  background:rgba(232,184,75,.14);
+  box-shadow:inset 0 0 0 2px rgba(232,184,75,.5);
+}
+
+/* ---------- cartel de ganancia ---------- */
+.banner{
+  position:absolute;inset:0;z-index:5;
+  display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:rgba(6,12,22,.86);
+}
+.banner.on{display:flex}
+.banner .txt{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--oro)}
+.banner .num{
+  font-family:'Bungee',cursive;
+  font-size:clamp(30px,9vw,52px);
+  color:var(--neon);margin-top:6px;
+  text-shadow:0 0 24px rgba(255,122,24,.7);
+}
+
+/* ---------- lectores ---------- */
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}
+.readout{
+  background:#08111E;border:1px solid var(--acero);
+  border-radius:9px;padding:8px 6px 6px;text-align:center;
+}
+.readout .label{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.4);
+}
+.readout .value{
+  font-family:'Share Tech Mono',monospace;
+  font-size:clamp(18px,4.8vw,24px);
+  color:var(--oro);margin-top:2px;
+}
+.readout.gain .value{color:var(--neon)}
+
+/* ---------- controles ---------- */
+.controls{display:flex;gap:9px;margin-top:12px}
+.bet{
+  display:flex;align-items:center;
+  background:var(--panel);border:1px solid var(--acero);
+  border-radius:11px;overflow:hidden;
+}
+.bet button{
+  width:36px;background:transparent;border:0;color:var(--crema);
+  font-size:21px;cursor:pointer;font-family:inherit;
+}
+.bet button:hover:not(:disabled){background:rgba(255,122,24,.16)}
+.bet .amount{
+  min-width:50px;text-align:center;
+  font-family:'Share Tech Mono',monospace;font-size:18px;
+}
+.spin{
+  flex:1;
+  font-family:'Bungee',cursive;
+  font-size:clamp(14px,3.8vw,18px);
+  color:#2B1200;
+  background:linear-gradient(180deg,#FFA24D 0%,var(--neon) 55%,#D45F00 100%);
+  border:0;border-radius:11px;padding:13px 8px;cursor:pointer;
+  box-shadow:0 5px 0 #8A3D00,0 10px 22px rgba(255,122,24,.25);
+  transition:transform .08s,box-shadow .08s;
+}
+.spin:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #8A3D00}
+.spin:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
+
+/* ---------- mensajes ---------- */
+.message{margin-top:11px;min-height:20px;text-align:center;font-size:15px;color:rgba(244,235,214,.6)}
+.message.win{color:var(--neon);font-weight:700}
+.message.free{color:var(--oro);font-weight:700}
+
+/* ---------- tabla de pagos ---------- */
+.paytable{
+  width:100%;max-width:620px;margin-top:20px;
+  background:rgba(22,38,61,.5);border:1px solid var(--acero);
+  border-radius:15px;padding:16px;
+}
+.paytable h2{
+  font-size:11px;letter-spacing:.3em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.42);margin-bottom:11px;
+}
+.ptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:6px}
+.ptrow{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(8,17,30,.6);border-radius:8px;padding:6px 9px;
+}
+.ptrow svg{width:26px;height:26px;flex-shrink:0}
+.ptrow .nums{
+  font-family:'Share Tech Mono',monospace;font-size:12px;
+  color:var(--oro);margin-left:auto;text-align:right;line-height:1.35;
+}
+.note{margin-top:11px;font-size:13px;color:rgba(244,235,214,.4);line-height:1.55}
+
+/* ---------- barra inferior ---------- */
+.utility{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.utility button{
+  background:transparent;border:1px solid var(--acero);
+  color:rgba(244,235,214,.58);border-radius:18px;
+  padding:6px 15px;font-family:inherit;font-size:14px;cursor:pointer;
+}
+.utility button:hover{border-color:var(--neon);color:var(--neon)}
+
+.disclaimer{
+  max-width:620px;margin-top:16px;text-align:center;
+  font-size:12px;color:rgba(244,235,214,.28);line-height:1.6;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .cell.nuevo,.cell.gana,.cell.sale{animation-duration:.01s}
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>INTI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="cabinet">
+  <div class="marquee">
+    <div class="eyebrow">Rembrandt Games</div>
+    <h1>INTI</h1>
+    <div class="sub">Cascada · 6×5 · Multiplicadores</div>
+  </div>
+
+  <div class="board">
+    <div class="grid" id="grid"></div>
+    <div class="banner" id="banner">
+      <div class="txt" id="bannerTxt">Ganancia total</div>
+      <div class="num" id="bannerNum">0</div>
+    </div>
+  </div>
+
+  <div class="readouts">
+    <div class="readout"><div class="label">Créditos</div><div class="value" id="credits">1000</div></div>
+    <div class="readout"><div class="label">Apuesta</div><div class="value" id="betView">10</div></div>
+    <div class="readout gain"><div class="label">Ganancia</div><div class="value" id="gain">0</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="bet">
+      <button id="betDown" aria-label="Bajar apuesta">−</button>
+      <span class="amount" id="betAmount">10</span>
+      <button id="betUp" aria-label="Subir apuesta">+</button>
+    </div>
+    <button class="spin" id="spin">GIRAR</button>
+  </div>
+
+  <div class="message" id="message">8 símbolos iguales o más pagan, caigan donde caigan</div>
+</div>
+
+<div class="paytable">
+  <h2>Tabla de pagos · 8-9 / 10-11 / 12+</h2>
+  <div class="ptgrid" id="paytable"></div>
+  <div class="note">
+    No hay líneas de pago: cuenta la cantidad total del mismo símbolo en pantalla.
+    Los símbolos que pagan desaparecen y caen otros encima, y se sigue pagando mientras salgan combinaciones.
+    Los orbes naranjas suman su valor y multiplican todo lo ganado en esa secuencia.
+    Con 4 ídolos o más se activan 10 giros gratis. RTP 96,25%.
+  </div>
+</div>
+
+<div class="utility">
+  <button id="recharge">Recargar créditos de prueba</button>
+  <button id="soundToggle">Sonido: activado</button>
+</div>
+
+<p class="disclaimer">Demo técnica. Créditos sin valor, no se juega dinero real.</p>
+
+<script src="engine.js"></script>
+<script src="symbols.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
