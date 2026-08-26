@@ -53,6 +53,7 @@ body{
 /* ---------- tablero ---------- */
 .board{
   background:linear-gradient(180deg,#0A1424 0%,#0E1B2E 100%);
+  cursor:pointer;
   border:3px solid var(--acero);
   border-radius:14px;
   padding:8px;
@@ -68,7 +69,10 @@ body{
   display:flex;align-items:center;justify-content:center;
   position:relative;overflow:hidden;
 }
-.cell svg{width:78%;height:78%;display:block}
+.cell svg{
+  width:78%;height:78%;display:block;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 2px rgba(11,21,36,.85));
+}
 
 .cell.nuevo{animation:caer .28s cubic-bezier(.3,1.4,.5,1) both}
 @keyframes caer{from{transform:translateY(-46px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -98,20 +102,81 @@ body{
   box-shadow:inset 0 0 0 2px rgba(232,184,75,.5);
 }
 
-/* ---------- cartel de ganancia ---------- */
-.banner{
-  position:absolute;inset:0;z-index:5;
-  display:none;align-items:center;justify-content:center;flex-direction:column;
-  background:rgba(6,12,22,.86);
+/* ---------- contador de combo ---------- */
+.combo{
+  position:absolute;top:10px;left:50%;
+  transform:translateX(-50%) translateY(-140%);
+  z-index:6;opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:999px;
+  background:rgba(8,17,30,.92);
+  border:1px solid var(--acero);
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+  transition:transform .22s cubic-bezier(.34,1.5,.64,1), opacity .22s;
+  white-space:nowrap;
 }
-.banner.on{display:flex}
-.banner .txt{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--oro)}
-.banner .num{
+.combo.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.combo .lbl{
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.5);
+}
+.combo .x{font-family:'Bungee',cursive;font-size:17px;color:var(--oro);line-height:1}
+.combo .monto{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--crema)}
+
+/* el color y el brillo suben con el largo de la cadena */
+.combo.nivel2{border-color:rgba(232,184,75,.55)}
+.combo.nivel3{border-color:var(--oro);box-shadow:0 0 18px rgba(232,184,75,.35)}
+.combo.nivel4{border-color:var(--neon);box-shadow:0 0 22px rgba(255,122,24,.45)}
+.combo.nivel4 .x{color:var(--neon)}
+.combo.nivel5{
+  border-color:var(--neon);
+  background:rgba(255,122,24,.18);
+  box-shadow:0 0 30px rgba(255,122,24,.6);
+}
+.combo.nivel5 .x{color:#fff;text-shadow:0 0 12px var(--neon)}
+
+.combo.late{animation:comboLate .3s cubic-bezier(.34,1.6,.64,1)}
+@keyframes comboLate{
+  0%{transform:translateX(-50%) scale(1)}
+  45%{transform:translateX(-50%) scale(1.18)}
+  100%{transform:translateX(-50%) scale(1)}
+}
+
+/* ---------- total de la jugada ---------- */
+.total{
+  position:absolute;left:0;right:0;bottom:8px;
+  z-index:6;opacity:0;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;
+  transform:translateY(14px);
+  transition:opacity .25s, transform .25s;
+}
+.total.on{opacity:1;transform:translateY(0)}
+.total .cap{
+  font-size:10px;letter-spacing:.28em;text-transform:uppercase;font-weight:600;
+  color:var(--oro);
+  text-shadow:0 2px 6px rgba(0,0,0,.9);
+}
+.total .num{
   font-family:'Bungee',cursive;
-  font-size:clamp(30px,9vw,52px);
-  color:var(--neon);margin-top:6px;
-  text-shadow:0 0 24px rgba(255,122,24,.7);
+  font-size:clamp(26px,7.5vw,42px);
+  color:var(--crema);line-height:1.1;
+  text-shadow:0 0 18px rgba(255,122,24,.65), 0 3px 10px rgba(0,0,0,.95);
 }
+.total.grande .num{
+  color:var(--neon);
+  font-size:clamp(32px,10vw,56px);
+  animation:totalPum .45s cubic-bezier(.34,1.6,.64,1);
+}
+@keyframes totalPum{0%{transform:scale(.55);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ---------- aviso de salto ---------- */
+.skiphint{
+  position:absolute;top:10px;right:12px;z-index:6;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(244,235,214,.38);
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.skiphint.on{opacity:1}
 
 /* ---------- lectores ---------- */
 .readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}
@@ -202,5 +267,5 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .cell.nuevo,.cell.gana,.cell.sale{animation-duration:.01s}
+  .cell.nuevo,.cell.gana,.cell.sale,.combo.late,.total.grande .num{animation-duration:.01s}
 }

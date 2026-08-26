@@ -15,52 +15,67 @@
   <div class="marquee">
     <div class="eyebrow">Rembrandt Games</div>
     <h1>INTI</h1>
-    <div class="sub">Cascada · 6×5 · Multiplicadores</div>
+    <div class="sub">Cascada &middot; 6&times;5 &middot; Multiplicadores</div>
   </div>
 
-  <div class="board">
-    <div class="grid" id="grid"></div>
-    <div class="banner" id="banner">
-      <div class="txt" id="bannerTxt">Ganancia total</div>
-      <div class="num" id="bannerNum">0</div>
+  <!-- El tablero contiene todo lo que se superpone: combo, total y aviso -->
+  <div class="board" id="board">
+
+    <!-- Contador de combo: aparece arriba durante las cascadas encadenadas -->
+    <div class="combo" id="combo">
+      <span class="lbl">Combo</span>
+      <span class="x" id="comboX">&times;1</span>
+      <span class="monto" id="comboMonto">+0</span>
     </div>
+
+    <div class="grid" id="grid"></div>
+
+    <!-- Total: aparece abajo, grande, sin tapar el tablero -->
+    <div class="total" id="total">
+      <span class="cap" id="totalCap">Ganancia</span>
+      <span class="num" id="totalNum">0</span>
+    </div>
+
+    <!-- Aviso de que se puede saltar la animacion -->
+    <div class="skiphint" id="skiphint">Toca para saltar</div>
   </div>
 
   <div class="readouts">
-    <div class="readout"><div class="label">Créditos</div><div class="value" id="credits">1000</div></div>
+    <div class="readout"><div class="label">Cr&eacute;ditos</div><div class="value" id="credits">1000</div></div>
     <div class="readout"><div class="label">Apuesta</div><div class="value" id="betView">10</div></div>
     <div class="readout gain"><div class="label">Ganancia</div><div class="value" id="gain">0</div></div>
   </div>
 
   <div class="controls">
     <div class="bet">
-      <button id="betDown" aria-label="Bajar apuesta">−</button>
+      <button id="betDown" aria-label="Bajar apuesta">&minus;</button>
       <span class="amount" id="betAmount">10</span>
       <button id="betUp" aria-label="Subir apuesta">+</button>
     </div>
     <button class="spin" id="spin">GIRAR</button>
   </div>
 
-  <div class="message" id="message">8 símbolos iguales o más pagan, caigan donde caigan</div>
+  <div class="message" id="message">8 s&iacute;mbolos iguales o m&aacute;s pagan, caigan donde caigan</div>
 </div>
 
 <div class="paytable">
-  <h2>Tabla de pagos · 8-9 / 10-11 / 12+</h2>
+  <h2>Tabla de pagos &middot; 8-9 / 10-11 / 12+</h2>
   <div class="ptgrid" id="paytable"></div>
   <div class="note">
-    No hay líneas de pago: cuenta la cantidad total del mismo símbolo en pantalla.
-    Los símbolos que pagan desaparecen y caen otros encima, y se sigue pagando mientras salgan combinaciones.
+    No hay l&iacute;neas de pago: cuenta la cantidad total del mismo s&iacute;mbolo en pantalla.
+    Los s&iacute;mbolos que pagan desaparecen y caen otros encima, y se sigue pagando mientras salgan
+    combinaciones &mdash; cada ca&iacute;da encadenada sube el combo.
     Los orbes naranjas suman su valor y multiplican todo lo ganado en esa secuencia.
-    Con 4 ídolos o más se activan 10 giros gratis. RTP 96,25%.
+    Con 4 &iacute;dolos o m&aacute;s se activan 10 giros gratis. RTP 96,25%.
   </div>
 </div>
 
 <div class="utility">
-  <button id="recharge">Recargar créditos de prueba</button>
+  <button id="recharge">Recargar cr&eacute;ditos de prueba</button>
   <button id="soundToggle">Sonido: activado</button>
 </div>
 
-<p class="disclaimer">Demo técnica. Créditos sin valor, no se juega dinero real.</p>
+<p class="disclaimer">Demo t&eacute;cnica. Cr&eacute;ditos sin valor, no se juega dinero real.</p>
 
 <script src="engine.js"></script>
 <script src="symbols.js"></script>

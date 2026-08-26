@@ -4,9 +4,9 @@
    Esta capa NO decide nada. Le pide un giro al motor, recibe el
    resultado ya resuelto con la lista de pasos, y lo reproduce.
 
-   Por eso el día que muevas el motor al servidor, este archivo
-   casi no cambia: en vez de motor.girar() harás fetch() y el
-   resto de la animación queda igual.
+   Como el resultado está decidido ANTES de animar, el jugador
+   puede saltarse la animación en cualquier momento sin que eso
+   cambie lo que gana. Por eso el botón de saltar es seguro.
    ============================================================ */
 (function () {
   'use strict';
@@ -19,7 +19,8 @@
     resaltarGanadores: 620,
     estallido: 300,
     caidaCascada: 360,
-    revelarMultiplicador: 800,
+    revelarMultiplicador: 850,
+    mostrarTotal: 900,
     entreGirosGratis: 1200
   };
 
@@ -34,12 +35,38 @@
   var acumuladoGratis = 0;
 
   var $ = function (id) { return document.getElementById(id); };
-  var espera = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
-  /* ---------------- dibujo ---------------- */
+  /* ============================================================
+     ESPERA CANCELABLE
+     Permite que un toque corte la animación al instante.
+     ============================================================ */
+  var saltar = false;
+  var cancelarEsperaActual = null;
+
+  function espera(ms) {
+    return new Promise(function (resolver) {
+      if (saltar) { resolver(); return; }
+      var t = setTimeout(function () { cancelarEsperaActual = null; resolver(); }, ms);
+      cancelarEsperaActual = function () {
+        clearTimeout(t);
+        cancelarEsperaActual = null;
+        resolver();
+      };
+    });
+  }
+
+  function pedirSalto() {
+    if (!ocupado || saltar) return;
+    saltar = true;
+    ocultarAviso();
+    if (cancelarEsperaActual) cancelarEsperaActual();
+  }
+
+  /* ============================================================
+     DIBUJO DEL TABLERO
+     ============================================================ */
   function pintar(grid, posNuevas) {
-    var cont = $('grid');
-    var nuevas = posNuevas ? new Set(posNuevas) : null;
+    var nuevas = posNuevas ? posNuevas : null;
     var html = '';
 
     for (var r = 0; r < motor.cfg.ROWS; r++) {
@@ -59,11 +86,11 @@
           dentro = arte.SCATTER;
         }
 
-        if (nuevas && nuevas.has(pos)) clases += ' nuevo';
+        if (nuevas && nuevas.indexOf(pos) >= 0) clases += ' nuevo';
         html += '<div class="' + clases + '" data-pos="' + pos + '">' + dentro + '</div>';
       }
     }
-    cont.innerHTML = html;
+    $('grid').innerHTML = html;
   }
 
   function todasLasPosiciones() {
@@ -85,36 +112,92 @@
     }
   }
 
-  /* ---------------- reproducción de un giro ---------------- */
+  /* ============================================================
+     CONTADOR DE COMBO
+     Se muestra arriba del tablero y sube con cada cascada.
+     El nivel cambia el color y el tamaño para que se sienta
+     que la cadena está creciendo.
+     ============================================================ */
+  function mostrarCombo(nivel, acumulado) {
+    var el = $('combo');
+    $('comboX').textContent = '×' + nivel;
+    $('comboMonto').textContent = '+' + INTI.redondear(acumulado);
+
+    el.className = 'combo on nivel' + Math.min(nivel, 5);
+    // reinicia la animación de latido
+    void el.offsetWidth;
+    el.classList.add('late');
+  }
+
+  function ocultarCombo() { $('combo').className = 'combo'; }
+
+  /* ============================================================
+     TOTAL DE LA JUGADA
+     ============================================================ */
+  function mostrarTotal(texto, monto, grande) {
+    $('totalCap').textContent = texto;
+    $('totalNum').textContent = INTI.redondear(monto);
+    $('total').className = 'total on' + (grande ? ' grande' : '');
+  }
+
+  function ocultarTotal() { $('total').className = 'total'; }
+
+  function mostrarAviso() { $('skiphint').classList.add('on'); }
+  function ocultarAviso() { $('skiphint').classList.remove('on'); }
+
+  /* ============================================================
+     REPRODUCCIÓN DE UN GIRO
+     ============================================================ */
   async function reproducir(resultado) {
     pintar(resultado.gridInicial, todasLasPosiciones());
     tono(180, 0.06, 0.04);
+    if (resultado.pasos.length > 0) mostrarAviso();
     await espera(TIEMPOS.caidaInicial);
 
+    var acumulado = 0;
+
     for (var i = 0; i < resultado.pasos.length; i++) {
+      if (saltar) break;
       var paso = resultado.pasos[i];
+      acumulado += paso.pago;
 
       pintar(paso.gridAntes, null);
       resaltar(paso.gridAntes, paso.ganadores);
-      mensaje('Cascada ' + (i + 1) + ' · +' + paso.pago, 'win');
-      tono(520 + i * 60, 0.12, 0.05);
+      mostrarCombo(i + 1, acumulado);
+      tono(520 + i * 70, 0.12, 0.05);
       await espera(TIEMPOS.resaltarGanadores);
+      if (saltar) break;
 
-      document.querySelectorAll('.cell.gana').forEach(function (e) { e.classList.add('sale'); });
+      var marcados = document.querySelectorAll('.cell.gana');
+      for (var k = 0; k < marcados.length; k++) marcados[k].classList.add('sale');
       await espera(TIEMPOS.estallido);
+      if (saltar) break;
 
       pintar(paso.gridDespues, paso.nuevas);
       await espera(TIEMPOS.caidaCascada);
     }
 
+    ocultarAviso();
+
+    // Si se saltó, mostramos directamente el estado final
+    if (saltar) {
+      pintar(resultado.gridFinal, null);
+      if (resultado.pasos.length > 0) {
+        mostrarCombo(resultado.pasos.length, resultado.pagoCascada);
+      }
+      return;
+    }
+
     if (resultado.pagoCascada > 0 && resultado.multTotal > 0) {
-      mensaje('Multiplicador total ' + resultado.multTotal + '×', 'win');
+      mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada * resultado.multTotal, true);
       fanfarria(resultado.multTotal);
       await espera(TIEMPOS.revelarMultiplicador);
     }
   }
 
-  /* ---------------- ciclo de juego ---------------- */
+  /* ============================================================
+     CICLO DE JUEGO
+     ============================================================ */
   async function jugar() {
     if (ocupado) return;
 
@@ -127,27 +210,32 @@
     }
 
     ocupado = true;
+    saltar = false;
     bloquear(true);
-    $('banner').classList.remove('on');
+    ocultarCombo();
+    ocultarTotal();
     $('gain').textContent = '0';
 
     if (!esGratis) {
       creditos -= apuesta;
-      $('credits').textContent = redondearVista(creditos);
+      $('credits').textContent = INTI.redondear(creditos);
     }
 
-    // AQUÍ se resuelve el giro entero, de una sola vez.
+    // El giro se resuelve entero AQUÍ, antes de animar nada.
     var resultado = motor.girar(apuesta, { gratis: esGratis });
 
     await reproducir(resultado);
 
     if (resultado.pagoTotal > 0) {
       creditos += resultado.pagoTotal;
-      $('credits').textContent = redondearVista(creditos);
+      $('credits').textContent = INTI.redondear(creditos);
       $('gain').textContent = resultado.pagoTotal;
-      mostrarBanner(esGratis ? 'Ganancia del giro gratis' : 'Ganancia total', resultado.pagoTotal);
+      mostrarTotal(esGratis ? 'Giro gratis' : 'Ganancia', resultado.pagoTotal,
+                   resultado.pagoTotal / apuesta >= 20);
       if (!esGratis) fanfarria(resultado.pagoTotal / apuesta);
-    } else if (resultado.pasos.length === 0) {
+      mensaje('', '');
+    } else {
+      ocultarCombo();
       mensaje('Sin combinación. Otra vez.', '');
     }
 
@@ -168,6 +256,7 @@
     }
 
     ocupado = false;
+    saltar = false;
     bloquear(false);
 
     if (girosGratisRestantes > 0) {
@@ -176,19 +265,13 @@
     }
   }
 
-  /* ---------------- utilidades de pantalla ---------------- */
-  function redondearVista(n) { return Math.round(n * 100) / 100; }
-
+  /* ============================================================
+     PANTALLA
+     ============================================================ */
   function mensaje(txt, cls) {
     var m = $('message');
     m.textContent = txt;
     m.className = 'message ' + (cls || '');
-  }
-
-  function mostrarBanner(txt, num) {
-    $('bannerTxt').textContent = txt;
-    $('bannerNum').textContent = num;
-    $('banner').classList.add('on');
   }
 
   function bloquear(v) {
@@ -205,7 +288,9 @@
     $('betView').textContent = APUESTAS[idxApuesta];
   }
 
-  /* ---------------- sonido ---------------- */
+  /* ============================================================
+     SONIDO
+     ============================================================ */
   var ctx = null;
   function tono(f, d, v) {
     if (!sonido) return;
@@ -218,14 +303,20 @@
       g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
       o.connect(g); g.connect(ctx.destination);
       o.start(); o.stop(ctx.currentTime + d);
-    } catch (e) { /* el navegador puede bloquear audio antes del primer toque */ }
-  }
-  function fanfarria(x) {
-    var notas = x >= 50 ? [523, 659, 784, 1046, 1318, 1568] : [440, 554, 659];
-    notas.forEach(function (n, i) { setTimeout(function () { tono(n, 0.16, 0.055); }, i * 95); });
+    } catch (e) { /* el navegador bloquea audio antes del primer toque */ }
   }
 
-  /* ---------------- tabla de pagos ---------------- */
+  function fanfarria(x) {
+    if (!sonido) return;
+    var notas = x >= 50 ? [523, 659, 784, 1046, 1318, 1568] : [440, 554, 659];
+    notas.forEach(function (n, i) {
+      setTimeout(function () { tono(n, 0.16, 0.055); }, i * 95);
+    });
+  }
+
+  /* ============================================================
+     TABLA DE PAGOS
+     ============================================================ */
   function pintarTabla() {
     var filas = motor.simbolos.slice().reverse().map(function (s) {
       return '<div class="ptrow">' + arte.dibujar(s) +
@@ -237,10 +328,16 @@
     $('paytable').innerHTML = filas.join('');
   }
 
-  /* ---------------- arranque ---------------- */
+  /* ============================================================
+     ARRANQUE
+     ============================================================ */
   $('spin').addEventListener('click', jugar);
   $('betUp').addEventListener('click', function () { cambiarApuesta(1); });
   $('betDown').addEventListener('click', function () { cambiarApuesta(-1); });
+
+  // Tocar el tablero salta la animación (el resultado ya está decidido)
+  $('board').addEventListener('click', pedirSalto);
+  $('board').addEventListener('touchstart', pedirSalto, { passive: true });
 
   $('recharge').addEventListener('click', function () {
     if (ocupado) return;
@@ -255,7 +352,10 @@
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); jugar(); }
+    if (e.code !== 'Space' || e.target !== document.body) return;
+    e.preventDefault();
+    if (ocupado) pedirSalto();   // espacio durante la animación = saltar
+    else jugar();                // espacio en reposo = girar
   });
 
   pintarTabla();
