@@ -113,3 +113,4 @@ requisito de las auditorías.
 
 Demo técnica funcional. Créditos sin valor, sin dinero real, sin necesidad de
 licencia ni certificación. Sirve tal cual como juego social o promocional.
+.
