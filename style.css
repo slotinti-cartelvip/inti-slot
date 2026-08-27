@@ -15,7 +15,7 @@
 
 body{
   min-height:100vh;
-  background:radial-gradient(130% 90% at 50% 0%, #24405F 0%, var(--laca) 58%, #050B14 100%);
+  background:var(--laca);
   font-family:'Barlow Condensed',system-ui,sans-serif;
   color:var(--crema);
   display:flex;flex-direction:column;align-items:center;
@@ -23,9 +23,101 @@ body{
   -webkit-tap-highlight-color:transparent;
 }
 
+
+
+/* ============================================================
+   FONDO
+   ------------------------------------------------------------
+   Capa fija detras de todo. El degradado oscuro NO es adorno:
+   sin el, el paisaje compite con los simbolos y el tablero
+   deja de leerse. Si tu fondo es mas claro, sube los valores
+   de opacidad (los .78 y .93 de abajo).
+   ============================================================ */
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:-3;
+  background:
+    linear-gradient(rgba(11,21,36,.78) 0%, rgba(9,18,31,.86) 45%, rgba(5,11,20,.93) 100%),
+    url('img/fondo.jpg') center/cover no-repeat;
+}
+
+/* viñeta: oscurece las esquinas y empuja la mirada al centro */
+body::after{
+  content:'';
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(120% 85% at 50% 42%, rgba(0,0,0,0) 38%, rgba(0,0,0,.55) 100%);
+}
+
+@media (max-aspect-ratio:1/1){
+  body::before{background:
+    linear-gradient(rgba(11,21,36,.78) 0%, rgba(9,18,31,.86) 45%, rgba(5,11,20,.93) 100%),
+    url('img/fondo-vertical.jpg') center/cover no-repeat;}
+}
+
+/* ============================================================
+   ESCENA — gabinete + personaje al costado
+   ============================================================ */
+.escena{
+  width:100%;max-width:620px;
+  display:flex;align-items:stretch;justify-content:center;gap:0;
+}
+.escena .cabinet{flex:0 1 620px;min-width:0}
+
+.personaje{
+  position:relative;
+  flex:0 0 auto;
+  align-self:flex-end;
+  margin-left:-18px;      /* se mete un poco tras el gabinete */
+  margin-bottom:6px;
+  pointer-events:none;
+  z-index:-1;
+}
+.personaje img{
+  display:block;
+  width:clamp(170px,20vw,250px);
+  height:auto;
+  filter:drop-shadow(-10px 12px 22px rgba(0,0,0,.6));
+  animation:respirar 4.5s ease-in-out infinite;
+  transform-origin:50% 100%;
+}
+
+/* resplandor detras, para despegarlo del fondo */
+.personaje .halo{
+  position:absolute;left:50%;top:48%;
+  width:130%;padding-bottom:130%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(232,184,75,.20) 0%,rgba(232,184,75,0) 62%);
+  z-index:-1;
+  transition:background .4s;
+}
+
+@keyframes respirar{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%    {transform:translateY(-7px) scale(1.012)}
+}
+
+/* celebra: se dispara al ganar */
+.personaje.celebra img{animation:celebrar .62s cubic-bezier(.34,1.56,.64,1) 2}
+@keyframes celebrar{
+  0%  {transform:translateY(0) rotate(0deg) scale(1)}
+  25% {transform:translateY(-22px) rotate(-3deg) scale(1.06)}
+  55% {transform:translateY(0) rotate(2deg) scale(.98)}
+  100%{transform:translateY(0) rotate(0deg) scale(1)}
+}
+.personaje.celebra .halo{
+  background:radial-gradient(circle,rgba(255,122,24,.42) 0%,rgba(255,122,24,0) 66%);
+}
+
+/* En pantallas angostas el personaje estorbaria el tablero */
+@media (max-width:900px){
+  .escena{max-width:620px}
+  .personaje{display:none}
+}
+
 /* ---------- gabinete ---------- */
 .cabinet{
   width:100%;max-width:620px;
+  position:relative;z-index:1;
   background:linear-gradient(180deg,#1B2E49 0%, #101E31 45%, #0A1526 100%);
   border:2px solid var(--acero);
   border-radius:22px;
@@ -69,10 +161,15 @@ body{
   display:flex;align-items:center;justify-content:center;
   position:relative;overflow:hidden;
 }
-.cell svg{
+.cell svg,
+.cell img.art{
   width:78%;height:78%;display:block;
+  object-fit:contain;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 2px rgba(11,21,36,.85));
+  -webkit-user-drag:none;user-select:none;
 }
+/* las imagenes ocupan un poco mas que los dibujos vectoriales */
+.cell img.art{width:88%;height:88%}
 
 .cell.nuevo{animation:caer .28s cubic-bezier(.3,1.4,.5,1) both}
 @keyframes caer{from{transform:translateY(-46px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -245,7 +342,8 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
   display:flex;align-items:center;gap:9px;
   background:rgba(8,17,30,.6);border-radius:8px;padding:6px 9px;
 }
-.ptrow svg{width:26px;height:26px;flex-shrink:0}
+.ptrow svg,
+.ptrow img.art{width:28px;height:28px;flex-shrink:0;object-fit:contain}
 .ptrow .nums{
   font-family:'Share Tech Mono',monospace;font-size:12px;
   color:var(--oro);margin-left:auto;text-align:right;line-height:1.35;
@@ -268,4 +366,6 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 
 @media (prefers-reduced-motion:reduce){
   .cell.nuevo,.cell.gana,.cell.sale,.combo.late,.total.grande .num{animation-duration:.01s}
+  .personaje img{animation:none}
+  .personaje.celebra img{animation-duration:.01s}
 }

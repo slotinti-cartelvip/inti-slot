@@ -145,6 +145,23 @@
   function mostrarAviso() { $('skiphint').classList.add('on'); }
   function ocultarAviso() { $('skiphint').classList.remove('on'); }
 
+
+  /* ============================================================
+     EL EKEKO
+     Respira siempre (eso va por CSS). Aqui solo se le avisa
+     cuando hay premio para que celebre.
+     El dia que lo cambies por una animacion Lottie, este es el
+     unico lugar del codigo que hay que tocar.
+     ============================================================ */
+  function ekekoCelebra() {
+    var p = $('personaje');
+    if (!p) return;
+    p.classList.remove('celebra');
+    void p.offsetWidth;          // reinicia la animacion
+    p.classList.add('celebra');
+    setTimeout(function () { p.classList.remove('celebra'); }, 1400);
+  }
+
   /* ============================================================
      REPRODUCCIÓN DE UN GIRO
      ============================================================ */
@@ -191,6 +208,7 @@
     if (resultado.pagoCascada > 0 && resultado.multTotal > 0) {
       mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada * resultado.multTotal, true);
       fanfarria(resultado.multTotal);
+      ekekoCelebra();
       await espera(TIEMPOS.revelarMultiplicador);
     }
   }
@@ -233,6 +251,7 @@
       mostrarTotal(esGratis ? 'Giro gratis' : 'Ganancia', resultado.pagoTotal,
                    resultado.pagoTotal / apuesta >= 20);
       if (!esGratis) fanfarria(resultado.pagoTotal / apuesta);
+      if (resultado.multTotal === 0) ekekoCelebra();
       mensaje('', '');
     } else {
       ocultarCombo();
@@ -253,6 +272,7 @@
       acumuladoGratis = 0;
       mensaje('¡' + resultado.scatters + ' ídolos! ' + motor.cfg.GIROS_GRATIS + ' giros gratis', 'free');
       fanfarria(100);
+      ekekoCelebra();
     }
 
     ocupado = false;
