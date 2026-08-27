@@ -3,9 +3,9 @@
    Paleta: azul marino, naranja y crema (con filo dorado)
    ============================================================ */
 :root{
-  --laca:#0B1524;
-  --panel:#16263D;
-  --acero:#2B4265;
+  --laca:#1A120B;
+  --panel:#2A1D12;
+  --acero:#4E3826;
   --neon:#FF7A18;
   --oro:#E8B84B;
   --crema:#F4EBD6;
@@ -19,7 +19,7 @@ body{
   font-family:'Barlow Condensed',system-ui,sans-serif;
   color:var(--crema);
   display:flex;flex-direction:column;align-items:center;
-  padding:22px 12px 44px;
+  padding:16px 12px 36px;
   -webkit-tap-highlight-color:transparent;
 }
 
@@ -37,7 +37,7 @@ body::before{
   content:'';
   position:fixed;inset:0;z-index:-3;
   background:
-    linear-gradient(rgba(11,21,36,.78) 0%, rgba(9,18,31,.86) 45%, rgba(5,11,20,.93) 100%),
+    linear-gradient(rgba(26,18,11,.78) 0%, rgba(20,14,9,.86) 45%, rgba(13,8,5,.93) 100%),
     url('img/fondo.jpg') center/cover no-repeat;
 }
 
@@ -50,7 +50,7 @@ body::after{
 
 @media (max-aspect-ratio:1/1){
   body::before{background:
-    linear-gradient(rgba(11,21,36,.78) 0%, rgba(9,18,31,.86) 45%, rgba(5,11,20,.93) 100%),
+    linear-gradient(rgba(26,18,11,.78) 0%, rgba(20,14,9,.86) 45%, rgba(13,8,5,.93) 100%),
     url('img/fondo-vertical.jpg') center/cover no-repeat;}
 }
 
@@ -58,10 +58,14 @@ body::after{
    ESCENA — gabinete + personaje al costado
    ============================================================ */
 .escena{
-  width:100%;max-width:620px;
-  display:flex;align-items:stretch;justify-content:center;gap:0;
+  width:100%;
+  /* El ancho se ata a la ALTURA de la ventana (168vh ~ proporcion 16:9).
+     Asi la escena crece a lo ancho y entra completa sin scroll,
+     en vez de estirarse hacia abajo. */
+  max-width:min(1180px, 168vh);
+  display:flex;align-items:center;justify-content:center;gap:0;
 }
-.escena .cabinet{flex:0 1 620px;min-width:0}
+.escena .cabinet{flex:1 1 auto;max-width:790px;min-width:0}
 
 .personaje{
   position:relative;
@@ -74,7 +78,7 @@ body::after{
 }
 .personaje img{
   display:block;
-  width:clamp(170px,20vw,250px);
+  width:clamp(190px,23vw,340px);
   height:auto;
   filter:drop-shadow(-10px 12px 22px rgba(0,0,0,.6));
   animation:respirar 4.5s ease-in-out infinite;
@@ -109,16 +113,17 @@ body::after{
 }
 
 /* En pantallas angostas el personaje estorbaria el tablero */
-@media (max-width:900px){
+@media (max-width:860px){
   .escena{max-width:620px}
   .personaje{display:none}
+  .paytable{max-width:620px}
 }
 
 /* ---------- gabinete ---------- */
 .cabinet{
-  width:100%;max-width:620px;
+  width:100%;
   position:relative;z-index:1;
-  background:linear-gradient(180deg,#1B2E49 0%, #101E31 45%, #0A1526 100%);
+  background:linear-gradient(180deg,#3A2A17 0%, #26190D 45%, #180F07 100%);
   border:2px solid var(--acero);
   border-radius:22px;
   box-shadow:0 0 0 5px rgba(232,184,75,.09), 0 30px 64px rgba(0,0,0,.65);
@@ -126,7 +131,7 @@ body::after{
 }
 
 /* ---------- marquesina ---------- */
-.marquee{text-align:center;padding:8px 0 14px}
+.marquee{text-align:center;padding:4px 0 12px}
 .marquee .eyebrow{
   font-size:10px;letter-spacing:.4em;font-weight:600;text-transform:uppercase;
   color:rgba(244,235,214,.42);
@@ -135,7 +140,7 @@ body::after{
   font-family:'Bungee',cursive;
   font-size:clamp(24px,6.5vw,36px);
   margin-top:5px;
-  text-shadow:0 0 14px rgba(232,184,75,.55),0 0 36px rgba(255,122,24,.30),0 3px 0 #7A4A05;
+  text-shadow:0 0 14px rgba(232,184,75,.55),0 0 36px rgba(255,122,24,.30),0 3px 0 #6B3D04;
 }
 .marquee .sub{
   font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-top:3px;
@@ -144,7 +149,7 @@ body::after{
 
 /* ---------- tablero ---------- */
 .board{
-  background:linear-gradient(180deg,#0A1424 0%,#0E1B2E 100%);
+  background:linear-gradient(180deg,#1C1409 0%,#241A0C 100%);
   cursor:pointer;
   border:3px solid var(--acero);
   border-radius:14px;
@@ -165,7 +170,7 @@ body::after{
 .cell img.art{
   width:78%;height:78%;display:block;
   object-fit:contain;
-  filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 2px rgba(11,21,36,.85));
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 2px rgba(26,18,11,.85));
   -webkit-user-drag:none;user-select:none;
 }
 /* las imagenes ocupan un poco mas que los dibujos vectoriales */
@@ -199,6 +204,50 @@ body::after{
   box-shadow:inset 0 0 0 2px rgba(232,184,75,.5);
 }
 
+
+/* ============================================================
+   DESTELLOS
+   ------------------------------------------------------------
+   Chispas que saltan de los símbolos que pagan. Son puro
+   adorno: se crean, se animan y se borran solas.
+   ============================================================ */
+.chispa{
+  position:absolute;
+  width:7px;height:7px;border-radius:50%;
+  pointer-events:none;z-index:4;
+  background:radial-gradient(circle, #fff 0%, var(--oro) 38%, rgba(232,184,75,0) 72%);
+  animation:chispear .78s ease-out forwards;
+}
+@keyframes chispear{
+  0%  {transform:translate(0,0) scale(.3);opacity:0}
+  18% {opacity:1}
+  100%{transform:translate(var(--dx), var(--dy)) scale(1.25);opacity:0}
+}
+
+/* barrido de luz sobre el tablero en premios grandes */
+.board .brillo{
+  position:absolute;top:0;bottom:0;width:38%;
+  left:-45%;z-index:5;pointer-events:none;
+  background:linear-gradient(105deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,225,170,.16) 45%,
+    rgba(255,255,255,.30) 52%,
+    rgba(255,225,170,.16) 59%,
+    rgba(255,255,255,0) 100%);
+  animation:barrer .95s ease-in-out forwards;
+}
+@keyframes barrer{
+  0%  {left:-45%}
+  100%{left:112%}
+}
+
+/* el número que sube se pone dorado mientras cuenta */
+.total .num.contando{color:var(--oro)}
+
+@media (prefers-reduced-motion:reduce){
+  .chispa,.board .brillo{display:none}
+}
+
 /* ---------- contador de combo ---------- */
 .combo{
   position:absolute;top:10px;left:50%;
@@ -206,7 +255,7 @@ body::after{
   z-index:6;opacity:0;pointer-events:none;
   display:flex;align-items:center;gap:8px;
   padding:6px 16px;border-radius:999px;
-  background:rgba(8,17,30,.92);
+  background:rgba(21,15,8,.92);
   border:1px solid var(--acero);
   box-shadow:0 6px 20px rgba(0,0,0,.5);
   transition:transform .22s cubic-bezier(.34,1.5,.64,1), opacity .22s;
@@ -278,7 +327,7 @@ body::after{
 /* ---------- lectores ---------- */
 .readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}
 .readout{
-  background:#08111E;border:1px solid var(--acero);
+  background:#150F08;border:1px solid var(--acero);
   border-radius:9px;padding:8px 6px 6px;text-align:center;
 }
 .readout .label{
@@ -329,8 +378,8 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 
 /* ---------- tabla de pagos ---------- */
 .paytable{
-  width:100%;max-width:620px;margin-top:20px;
-  background:rgba(22,38,61,.5);border:1px solid var(--acero);
+  width:100%;max-width:min(1180px, 168vh);margin-top:20px;
+  background:rgba(42,29,18,.5);border:1px solid var(--acero);
   border-radius:15px;padding:16px;
 }
 .paytable h2{
@@ -340,7 +389,7 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 .ptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:6px}
 .ptrow{
   display:flex;align-items:center;gap:9px;
-  background:rgba(8,17,30,.6);border-radius:8px;padding:6px 9px;
+  background:rgba(21,15,8,.6);border-radius:8px;padding:6px 9px;
 }
 .ptrow svg,
 .ptrow img.art{width:28px;height:28px;flex-shrink:0;object-fit:contain}

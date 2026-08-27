@@ -39,8 +39,8 @@ function cierto(v, msg) { if (!v) throw new Error(msg || 'esperaba verdadero'); 
      r=rombo u=tumi       k=chakana   i=inti
      S=scatter   M=orbe de valor 5    N=orbe de valor 10        */
 var LETRAS = {
-  c: 'copa', t: 'triangulo', h: 'hexagono', p: 'pentagono',
-  r: 'rombo', u: 'tumi', k: 'chakana', i: 'inti'
+  c: 'j', t: 'q', h: 'k', p: 'bs5',
+  r: 'bs10', u: 'bs100', k: 'chulito', i: 'casita'
 };
 
 function gridDe(filas) {
@@ -136,9 +136,9 @@ probar('cuenta bien los símbolos del tablero', function () {
     'pppppp'
   ]);
   var m = motor._.contar(g);
-  igual(m.copa, 8);
-  igual(m.rombo, 4);
-  igual(m.triangulo, 6);
+  igual(m.j, 8);
+  igual(m.bs10, 4);
+  igual(m.q, 6);
 });
 
 probar('los orbes y scatters no se cuentan como símbolos', function () {
@@ -150,7 +150,7 @@ probar('los orbes y scatters no se cuentan como símbolos', function () {
     'pppppp'
   ]);
   var m = motor._.contar(g);
-  igual(m.copa, 10, 'copas');
+  igual(m.j, 10, 'jotas');
   igual(m.orbe, undefined, 'orbe no debe contarse');
   igual(m.scatter, undefined, 'scatter no debe contarse');
 });
@@ -183,7 +183,7 @@ probar('con 7 símbolos iguales NO paga', function () {
     'uuuuuu'
   ]);
   // copa aparece 7 veces: 6 arriba + 1
-  igual(motor._.contar(g).copa, 7, 'preparación de la prueba');
+  igual(motor._.contar(g).j, 7, 'preparación de la prueba');
   var ev = motor._.evaluar(g, 10);
   igual(ev.ganadores.length, 0, 'no debería haber ganadores');
   igual(ev.pago, 0);
@@ -197,10 +197,10 @@ probar('con 8 símbolos iguales paga el tramo 0 × apuesta', function () {
     'rrrrrr',
     'uuuuuu'
   ]);
-  igual(motor._.contar(g).copa, 8, 'preparación');
+  igual(motor._.contar(g).j, 8, 'preparación');
   var ev = motor._.evaluar(g, 10);
-  igual(ev.ganadores, ['copa']);
-  igual(ev.pago, INTI.redondear(0.18 * 10), 'copa tramo 0 = 0.18 × 10');
+  igual(ev.ganadores, ['j']);
+  igual(ev.pago, INTI.redondear(0.18 * 10), 'j tramo 0 = 0.18 × 10');
 });
 
 probar('con 12 símbolos iguales paga el tramo 2', function () {
@@ -211,9 +211,9 @@ probar('con 12 símbolos iguales paga el tramo 2', function () {
     'rrrrrr',
     'uuuuuu'
   ]);
-  igual(motor._.contar(g).inti, 12, 'preparación');
+  igual(motor._.contar(g).casita, 12, 'preparación');
   var ev = motor._.evaluar(g, 10);
-  igual(ev.pago, INTI.redondear(17.5 * 10), 'inti tramo 2 = 17.5 × 10');
+  igual(ev.pago, INTI.redondear(17.5 * 10), 'casita tramo 2 = 17.5 × 10');
 });
 
 probar('varios símbolos ganadores a la vez suman sus pagos', function () {
@@ -225,10 +225,10 @@ probar('varios símbolos ganadores a la vez suman sus pagos', function () {
     'uuuuuu'
   ]);
   var m = motor._.contar(g);
-  igual(m.copa, 8, 'copas'); igual(m.inti, 10, 'intis');
+  igual(m.j, 8, 'jotas'); igual(m.casita, 10, 'intis');
   var ev = motor._.evaluar(g, 10);
-  igual(ev.ganadores.sort(), ['copa', 'inti']);
-  igual(ev.pago, INTI.redondear(0.18 * 10 + 7.0 * 10), 'copa tramo 0 + inti tramo 1');
+  igual(ev.ganadores.sort(), ['casita', 'j']);
+  igual(ev.pago, INTI.redondear(0.18 * 10 + 7.0 * 10), 'j tramo 0 + casita tramo 1');
 });
 
 probar('el pago escala de forma lineal con la apuesta', function () {
@@ -245,31 +245,31 @@ grupo('5. Cascada');
 
 probar('cada columna sigue teniendo 5 celdas después de derrumbar', function () {
   var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr', 'uuuuuu']);
-  var res = motor._.derrumbar(g, ['copa'], false);
+  var res = motor._.derrumbar(g, ['j'], false);
   res.grid.forEach(function (col, i) { igual(col.length, 5, 'columna ' + i); });
 });
 
 probar('los símbolos ganadores desaparecen del tablero', function () {
   var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr', 'uuuuuu']);
-  var res = motor._.derrumbar(g, ['copa'], false);
-  var quedan = motor._.contar(res.grid).copa || 0;
+  var res = motor._.derrumbar(g, ['j'], false);
+  var quedan = motor._.contar(res.grid).j || 0;
   // pueden reaparecer copas nuevas al rellenar, pero nunca las 8 originales intactas
-  cierto(quedan < 8, 'quedaron ' + quedan + ' copas, deberían ser menos de 8');
+  cierto(quedan < 8, 'quedaron ' + quedan + ' jotas, deberían ser menos de 8');
 });
 
 probar('los que sobreviven caen al fondo manteniendo su orden', function () {
   // columna 0: c,c,t,r,u  → al quitar copas debe quedar [nuevo, nuevo, t, r, u]
   var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
-  var res = motor._.derrumbar(g, ['copa'], false);
+  var res = motor._.derrumbar(g, ['j'], false);
   var col = res.grid[0];
-  igual(col[2], { t: 'sim', id: 'triangulo' }, 'fila 2');
-  igual(col[3], { t: 'sim', id: 'rombo' }, 'fila 3');
-  igual(col[4], { t: 'sim', id: 'tumi' }, 'fila 4');
+  igual(col[2], { t: 'sim', id: 'q' }, 'fila 2');
+  igual(col[3], { t: 'sim', id: 'bs10' }, 'fila 3');
+  igual(col[4], { t: 'sim', id: 'bs100' }, 'fila 4');
 });
 
 probar('las celdas nuevas entran por arriba', function () {
   var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
-  var res = motor._.derrumbar(g, ['copa'], false);
+  var res = motor._.derrumbar(g, ['j'], false);
   igual(res.nuevas.filter(function (p) { return p.indexOf('0-') === 0; }).sort(), ['0-0', '0-1']);
 });
 
@@ -283,14 +283,14 @@ probar('los orbes NO se eliminan en la cascada', function () {
   ]);
   var antes = motor._.listaOrbes(g).sort(function (a, b) { return a - b; });
   igual(antes, [5, 10], 'preparación');
-  var res = motor._.derrumbar(g, ['copa'], false);
+  var res = motor._.derrumbar(g, ['j'], false);
   var despues = motor._.listaOrbes(res.grid);
   cierto(despues.indexOf(5) >= 0 && despues.indexOf(10) >= 0, 'se perdió algún orbe');
 });
 
 probar('los scatters NO se eliminan en la cascada', function () {
   var g = gridDe(['ccccSc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
-  var res = motor._.derrumbar(g, ['copa'], false);
+  var res = motor._.derrumbar(g, ['j'], false);
   igual(motor._.contarScatters(res.grid), 1, 'el scatter debería seguir ahí');
 });
 

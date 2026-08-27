@@ -40,14 +40,14 @@
      peso  = qué tan seguido aparece (mayor = más común)
      Calibrado a RTP 96,25% — si tocas un número, vuelve a correr sim.js */
   var SIMBOLOS = [
-    { id: 'copa',      nombre: 'Copa',      color: '#B15CD8', pagos: [0.18, 0.35, 0.70],  peso: 24 },
-    { id: 'triangulo', nombre: 'Triángulo', color: '#3FC97E', pagos: [0.20, 0.42, 0.85],  peso: 22 },
-    { id: 'hexagono',  nombre: 'Hexágono',  color: '#F0A93B', pagos: [0.28, 0.55, 1.10],  peso: 20 },
-    { id: 'pentagono', nombre: 'Pentágono', color: '#E0453F', pagos: [0.35, 0.70, 1.40],  peso: 17 },
-    { id: 'rombo',     nombre: 'Rombo',     color: '#3AA9E8', pagos: [0.55, 1.10, 2.80],  peso: 14 },
-    { id: 'tumi',      nombre: 'Tumi',      color: '#D9A441', pagos: [0.70, 1.40, 3.50],  peso: 10 },
-    { id: 'chakana',   nombre: 'Chakana',   color: '#2FD3C4', pagos: [1.40, 2.80, 7.00],  peso: 7  },
-    { id: 'inti',      nombre: 'Inti',      color: '#FFC93C', pagos: [3.50, 7.00, 17.50], peso: 4  }
+    { id: 'j',       nombre: 'J',       color: '#3AA9E8', tipo: 'letra',   texto: 'J',   pagos: [0.18, 0.35, 0.70],  peso: 24 },
+    { id: 'q',       nombre: 'Q',       color: '#3FC97E', tipo: 'letra',   texto: 'Q',   pagos: [0.20, 0.42, 0.85],  peso: 22 },
+    { id: 'k',       nombre: 'K',       color: '#B15CD8', tipo: 'letra',   texto: 'K',   pagos: [0.28, 0.55, 1.10],  peso: 20 },
+    { id: 'bs5',     nombre: '5 Bs',    color: '#F0A93B', tipo: 'billete', texto: '5',   pagos: [0.35, 0.70, 1.40],  peso: 17 },
+    { id: 'bs10',    nombre: '10 Bs',   color: '#E0453F', tipo: 'billete', texto: '10',  pagos: [0.55, 1.10, 2.80],  peso: 14 },
+    { id: 'bs100',   nombre: '100 Bs',  color: '#2FD3C4', tipo: 'billete', texto: '100', pagos: [0.70, 1.40, 3.50],  peso: 10 },
+    { id: 'chulito', nombre: 'Chulito', color: '#FF7A18', tipo: 'imagen',  archivo: 'img/chulito.png', pagos: [1.40, 2.80, 7.00],  peso: 7 },
+    { id: 'casita',  nombre: 'Casita',  color: '#E8703A', tipo: 'imagen',  archivo: 'img/casita.png',  pagos: [3.50, 7.00, 17.50], peso: 4 }
   ];
 
   /* ============================================================
