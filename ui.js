@@ -106,7 +106,7 @@
         var cel = grid[c][r];
         if (cel.t === 'sim' && ganadores.indexOf(cel.id) >= 0) {
           var el = document.querySelector('[data-pos="' + c + '-' + r + '"]');
-          if (el) el.classList.add('gana');
+          if (el) { el.classList.add('gana'); chispear(el, 4); }
         }
       }
     }
@@ -145,6 +145,68 @@
   function mostrarAviso() { $('skiphint').classList.add('on'); }
   function ocultarAviso() { $('skiphint').classList.remove('on'); }
 
+
+
+  /* ============================================================
+     NÚMEROS QUE SUBEN
+     ------------------------------------------------------------
+     El monto no aparece de golpe: trepa. Esa media pausa
+     mientras el número corre es lo que hace que un premio se
+     sienta premio y no un dato.
+     La duración crece con el tamaño del premio, con tope, para
+     que un premio grande se saboree y uno chico no aburra.
+     ============================================================ */
+  function animarNumero(el, desde, hasta, ms, alTerminar) {
+    var t0 = null;
+    var salto = hasta - desde;
+
+    function paso(t) {
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / ms);
+      var suave = 1 - Math.pow(1 - p, 3);        // frena al final
+      el.textContent = INTI.redondear(desde + salto * suave);
+      if (p < 1) requestAnimationFrame(paso);
+      else {
+        el.textContent = INTI.redondear(hasta);
+        if (alTerminar) alTerminar();
+      }
+    }
+    requestAnimationFrame(paso);
+  }
+
+  function duracionConteo(veces) {
+    if (veces >= 50) return 2200;
+    if (veces >= 20) return 1500;
+    if (veces >= 5)  return 950;
+    return 550;
+  }
+
+  /* ============================================================
+     CHISPAS
+     Saltan de cada símbolo que paga. Se borran solas.
+     ============================================================ */
+  function chispear(celda, cantidad) {
+    for (var i = 0; i < cantidad; i++) {
+      var c = document.createElement('span');
+      c.className = 'chispa';
+      var ang = Math.random() * Math.PI * 2;
+      var dist = 22 + Math.random() * 26;
+      c.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(1) + 'px');
+      c.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(1) + 'px');
+      c.style.left = (28 + Math.random() * 44) + '%';
+      c.style.top  = (28 + Math.random() * 44) + '%';
+      c.style.animationDelay = (Math.random() * 0.22).toFixed(2) + 's';
+      celda.appendChild(c);
+      (function (el) { setTimeout(function () { el.remove(); }, 1100); })(c);
+    }
+  }
+
+  function barrerLuz() {
+    var b = document.createElement('div');
+    b.className = 'brillo';
+    $('board').appendChild(b);
+    setTimeout(function () { b.remove(); }, 1000);
+  }
 
   /* ============================================================
      EL EKEKO
@@ -206,7 +268,14 @@
     }
 
     if (resultado.pagoCascada > 0 && resultado.multTotal > 0) {
-      mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada * resultado.multTotal, true);
+      var conMult = INTI.redondear(resultado.pagoCascada * resultado.multTotal);
+      mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada, true);
+      $('totalNum').classList.add('contando');
+      animarNumero($('totalNum'), resultado.pagoCascada, conMult,
+                   duracionConteo(resultado.multTotal), function () {
+        $('totalNum').classList.remove('contando');
+      });
+      barrerLuz();
       fanfarria(resultado.multTotal);
       ekekoCelebra();
       await espera(TIEMPOS.revelarMultiplicador);
@@ -245,12 +314,21 @@
     await reproducir(resultado);
 
     if (resultado.pagoTotal > 0) {
+      var veces = resultado.pagoTotal / apuesta;
+      var dur = duracionConteo(veces);
+      var creditosAntes = creditos;
       creditos += resultado.pagoTotal;
-      $('credits').textContent = INTI.redondear(creditos);
-      $('gain').textContent = resultado.pagoTotal;
-      mostrarTotal(esGratis ? 'Giro gratis' : 'Ganancia', resultado.pagoTotal,
-                   resultado.pagoTotal / apuesta >= 20);
-      if (!esGratis) fanfarria(resultado.pagoTotal / apuesta);
+
+      mostrarTotal(esGratis ? 'Giro gratis' : 'Ganancia', 0, veces >= 20);
+      $('totalNum').classList.add('contando');
+      animarNumero($('totalNum'), 0, resultado.pagoTotal, dur, function () {
+        $('totalNum').classList.remove('contando');
+      });
+      animarNumero($('gain'), 0, resultado.pagoTotal, dur);
+      animarNumero($('credits'), creditosAntes, creditos, dur);
+
+      if (veces >= 20) barrerLuz();
+      if (!esGratis) fanfarria(veces);
       if (resultado.multTotal === 0) ekekoCelebra();
       mensaje('', '');
     } else {
