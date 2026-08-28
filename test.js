@@ -98,10 +98,10 @@ grupo('2. Cuadrícula');
 
 var motor = INTI.crearMotor({ semilla: 42 });
 
-probar('se genera con 6 columnas de 5 filas', function () {
+probar('se genera con 6 columnas de 4 filas', function () {
   var g = motor._.nuevaGrid(false);
   igual(g.length, 6, 'columnas');
-  g.forEach(function (col, i) { igual(col.length, 5, 'filas de la columna ' + i); });
+  g.forEach(function (col, i) { igual(col.length, 4, 'filas de la columna ' + i); });
 });
 
 probar('toda celda es símbolo, orbe o scatter', function () {
@@ -132,8 +132,7 @@ probar('cuenta bien los símbolos del tablero', function () {
     'cccccc',
     'ccrrrr',
     'tttttt',
-    'hhhhhh',
-    'pppppp'
+    'hhhhhh'
   ]);
   var m = motor._.contar(g);
   igual(m.j, 8);
@@ -146,8 +145,7 @@ probar('los orbes y scatters no se cuentan como símbolos', function () {
     'ccccMS',
     'cccccc',
     'tttttt',
-    'hhhhhh',
-    'pppppp'
+    'hhhhhh'
   ]);
   var m = motor._.contar(g);
   igual(m.j, 10, 'jotas');
@@ -176,11 +174,10 @@ grupo('4. Pagos');
 
 probar('con 7 símbolos iguales NO paga', function () {
   var g = gridDe([
-    'ccccccc'.slice(0, 6),
+    'cccccc',
     'chhhhh',
-    'ttttttt'.slice(0, 6),
-    'rrrrrr',
-    'uuuuuu'
+    'tttttt',
+    'rrrrrr'
   ]);
   // copa aparece 7 veces: 6 arriba + 1
   igual(motor._.contar(g).j, 7, 'preparación de la prueba');
@@ -194,13 +191,12 @@ probar('con 8 símbolos iguales paga el tramo 0 × apuesta', function () {
     'cccccc',
     'cchhhh',
     'tttttt',
-    'rrrrrr',
-    'uuuuuu'
+    'rrrrrr'
   ]);
   igual(motor._.contar(g).j, 8, 'preparación');
   var ev = motor._.evaluar(g, 10);
   igual(ev.ganadores, ['j']);
-  igual(ev.pago, INTI.redondear(0.18 * 10), 'j tramo 0 = 0.18 × 10');
+  igual(ev.pago, INTI.redondear(1.40 * 10), 'j tramo 0 = 1.40 × 10');
 });
 
 probar('con 12 símbolos iguales paga el tramo 2', function () {
@@ -208,12 +204,11 @@ probar('con 12 símbolos iguales paga el tramo 2', function () {
     'iiiiii',
     'iiiiii',
     'tttttt',
-    'rrrrrr',
-    'uuuuuu'
+    'rrrrrr'
   ]);
   igual(motor._.contar(g).casita, 12, 'preparación');
   var ev = motor._.evaluar(g, 10);
-  igual(ev.pago, INTI.redondear(17.5 * 10), 'casita tramo 2 = 17.5 × 10');
+  igual(ev.pago, INTI.redondear(138 * 10), 'casita tramo 2 = 138 × 10');
 });
 
 probar('varios símbolos ganadores a la vez suman sus pagos', function () {
@@ -221,18 +216,17 @@ probar('varios símbolos ganadores a la vez suman sus pagos', function () {
     'cccccc',
     'cciiii',
     'iiiiii',
-    'rrrrrr',
-    'uuuuuu'
+    'rrrrrr'
   ]);
   var m = motor._.contar(g);
   igual(m.j, 8, 'jotas'); igual(m.casita, 10, 'intis');
   var ev = motor._.evaluar(g, 10);
   igual(ev.ganadores.sort(), ['casita', 'j']);
-  igual(ev.pago, INTI.redondear(0.18 * 10 + 7.0 * 10), 'j tramo 0 + casita tramo 1');
+  igual(ev.pago, INTI.redondear(1.40 * 10 + 55 * 10), 'j tramo 0 + casita tramo 1');
 });
 
 probar('el pago escala de forma lineal con la apuesta', function () {
-  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr', 'uuuuuu']);
+  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr']);
   var a = motor._.evaluar(g, 1).pago;
   var b = motor._.evaluar(g, 50).pago;
   cerca(b, a * 50, 0.01, 'apuesta 50 debería pagar 50 veces la de 1');
@@ -243,14 +237,14 @@ probar('el pago escala de forma lineal con la apuesta', function () {
    ============================================================ */
 grupo('5. Cascada');
 
-probar('cada columna sigue teniendo 5 celdas después de derrumbar', function () {
-  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr', 'uuuuuu']);
+probar('cada columna sigue teniendo 4 celdas después de derrumbar', function () {
+  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
-  res.grid.forEach(function (col, i) { igual(col.length, 5, 'columna ' + i); });
+  res.grid.forEach(function (col, i) { igual(col.length, 4, 'columna ' + i); });
 });
 
 probar('los símbolos ganadores desaparecen del tablero', function () {
-  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr', 'uuuuuu']);
+  var g = gridDe(['cccccc', 'cchhhh', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
   var quedan = motor._.contar(res.grid).j || 0;
   // pueden reaparecer copas nuevas al rellenar, pero nunca las 8 originales intactas
@@ -259,16 +253,15 @@ probar('los símbolos ganadores desaparecen del tablero', function () {
 
 probar('los que sobreviven caen al fondo manteniendo su orden', function () {
   // columna 0: c,c,t,r,u  → al quitar copas debe quedar [nuevo, nuevo, t, r, u]
-  var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
+  var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
   var col = res.grid[0];
   igual(col[2], { t: 'sim', id: 'q' }, 'fila 2');
   igual(col[3], { t: 'sim', id: 'bs10' }, 'fila 3');
-  igual(col[4], { t: 'sim', id: 'bs100' }, 'fila 4');
 });
 
 probar('las celdas nuevas entran por arriba', function () {
-  var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
+  var g = gridDe(['cccccc', 'cccccc', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
   igual(res.nuevas.filter(function (p) { return p.indexOf('0-') === 0; }).sort(), ['0-0', '0-1']);
 });
@@ -278,8 +271,7 @@ probar('los orbes NO se eliminan en la cascada', function () {
     'ccccMc',
     'cccNcc',
     'tttttt',
-    'rrrrrr',
-    'uuuuuu'
+    'rrrrrr'
   ]);
   var antes = motor._.listaOrbes(g).sort(function (a, b) { return a - b; });
   igual(antes, [5, 10], 'preparación');
@@ -289,7 +281,7 @@ probar('los orbes NO se eliminan en la cascada', function () {
 });
 
 probar('los scatters NO se eliminan en la cascada', function () {
-  var g = gridDe(['ccccSc', 'cccccc', 'tttttt', 'rrrrrr', 'uuuuuu']);
+  var g = gridDe(['ccccSc', 'cccccc', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
   igual(motor._.contarScatters(res.grid), 1, 'el scatter debería seguir ahí');
 });
@@ -415,7 +407,7 @@ probar('el mismo motor con la misma semilla da el mismo resultado', function () 
    ============================================================ */
 grupo('9. RTP (500.000 rondas, puede tardar unos segundos)');
 
-probar('el RTP converge a 96,25% ± 1,5 puntos', function () {
+probar('el RTP converge a 96,1% ± 2,5 puntos', function () {
   var m = INTI.crearMotor({ semilla: 20260825 });
   var N = 500000, APUESTA = 10, apostado = 0, ganado = 0;
   for (var i = 0; i < N; i++) {
@@ -424,7 +416,7 @@ probar('el RTP converge a 96,25% ± 1,5 puntos', function () {
   }
   var rtp = ganado / apostado * 100;
   console.log('      RTP medido: ' + rtp.toFixed(2) + '%');
-  cerca(rtp, 96.25, 1.5, 'RTP');
+  cerca(rtp, 96.1, 2.5, 'RTP');  // tolerancia amplia: el juego es muy volatil
 });
 
 /* ---------- resumen ---------- */

@@ -55,68 +55,88 @@ body::after{
 }
 
 /* ============================================================
-   ESCENA — gabinete + personaje al costado
+   ESCENA — ocupa la ventana entera, sin scroll
    ============================================================ */
-.escena{
-  width:100%;
-  /* El ancho se ata a la ALTURA de la ventana (168vh ~ proporcion 16:9).
-     Asi la escena crece a lo ancho y entra completa sin scroll,
-     en vez de estirarse hacia abajo. */
-  max-width:min(1180px, 168vh);
-  display:flex;align-items:center;justify-content:center;gap:0;
+html,body{height:100%}
+body{
+  height:100vh;height:100dvh;
+  overflow:hidden;
+  justify-content:center;
+  padding:10px;
 }
-.escena .cabinet{flex:1 1 auto;max-width:790px;min-width:0}
+
+.escena{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  gap:0;
+}
+.escena .cabinet{
+  flex:0 1 auto;
+  /* el ancho lo manda la ALTURA disponible, para que el
+     tablero crezca sin desbordar la pantalla */
+  width:min(78vw, 132vh);
+  max-width:900px;
+}
 
 .personaje{
   position:relative;
   flex:0 0 auto;
-  align-self:flex-end;
-  margin-left:-18px;      /* se mete un poco tras el gabinete */
-  margin-bottom:6px;
+  align-self:center;          /* centrado al lado del tablero */
+  margin-left:-26px;
   pointer-events:none;
   z-index:-1;
 }
 .personaje img{
   display:block;
-  width:clamp(190px,23vw,340px);
+  width:min(30vw, 62vh);
+  max-width:430px;
   height:auto;
-  filter:drop-shadow(-10px 12px 22px rgba(0,0,0,.6));
+  filter:drop-shadow(-12px 14px 26px rgba(0,0,0,.65));
   animation:respirar 4.5s ease-in-out infinite;
   transform-origin:50% 100%;
 }
-
-/* resplandor detras, para despegarlo del fondo */
 .personaje .halo{
-  position:absolute;left:50%;top:48%;
-  width:130%;padding-bottom:130%;
+  position:absolute;left:50%;top:50%;
+  width:135%;padding-bottom:135%;
   transform:translate(-50%,-50%);
   background:radial-gradient(circle,rgba(232,184,75,.20) 0%,rgba(232,184,75,0) 62%);
-  z-index:-1;
-  transition:background .4s;
+  z-index:-1;transition:background .4s;
 }
 
 @keyframes respirar{
   0%,100%{transform:translateY(0) scale(1)}
-  50%    {transform:translateY(-7px) scale(1.012)}
+  50%    {transform:translateY(-8px) scale(1.012)}
 }
 
-/* celebra: se dispara al ganar */
+/* celebra al ganar */
 .personaje.celebra img{animation:celebrar .62s cubic-bezier(.34,1.56,.64,1) 2}
 @keyframes celebrar{
   0%  {transform:translateY(0) rotate(0deg) scale(1)}
-  25% {transform:translateY(-22px) rotate(-3deg) scale(1.06)}
+  25% {transform:translateY(-26px) rotate(-3deg) scale(1.07)}
   55% {transform:translateY(0) rotate(2deg) scale(.98)}
   100%{transform:translateY(0) rotate(0deg) scale(1)}
 }
 .personaje.celebra .halo{
-  background:radial-gradient(circle,rgba(255,122,24,.42) 0%,rgba(255,122,24,0) 66%);
+  background:radial-gradient(circle,rgba(255,122,24,.45) 0%,rgba(255,122,24,0) 66%);
 }
 
-/* En pantallas angostas el personaje estorbaria el tablero */
-@media (max-width:860px){
-  .escena{max-width:620px}
+/* LANZA: el gesto con que entrega un multiplicador */
+.personaje.lanza img{animation:lanzar .55s cubic-bezier(.36,1.4,.5,1)}
+@keyframes lanzar{
+  0%  {transform:translateY(0) rotate(0deg) scale(1)}
+  22% {transform:translateY(6px) rotate(4deg) scale(.96)}   /* toma impulso */
+  52% {transform:translateY(-16px) rotate(-7deg) scale(1.05)} /* lanza */
+  100%{transform:translateY(0) rotate(0deg) scale(1)}
+}
+.personaje.lanza .halo{
+  background:radial-gradient(circle,rgba(255,180,60,.55) 0%,rgba(255,150,40,0) 60%);
+}
+
+@media (max-width:880px){
+  body{overflow:auto;height:auto;min-height:100vh}
+  .escena{height:auto;flex-direction:column}
+  .escena .cabinet{width:100%;max-width:560px}
   .personaje{display:none}
-  .paytable{max-width:620px}
 }
 
 /* ---------- gabinete ---------- */
@@ -131,7 +151,7 @@ body::after{
 }
 
 /* ---------- marquesina ---------- */
-.marquee{text-align:center;padding:4px 0 12px}
+.marquee{text-align:center;padding:4px 0 12px;position:relative}
 .marquee .eyebrow{
   font-size:10px;letter-spacing:.4em;font-weight:600;text-transform:uppercase;
   color:rgba(244,235,214,.42);
@@ -157,7 +177,7 @@ body::after{
   position:relative;overflow:hidden;
   box-shadow:inset 0 0 40px rgba(0,0,0,.6);
 }
-.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 
 .cell{
   aspect-ratio:1;
@@ -324,97 +344,189 @@ body::after{
 }
 .skiphint.on{opacity:1}
 
-/* ---------- lectores ---------- */
-.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}
-.readout{
-  background:#150F08;border:1px solid var(--acero);
-  border-radius:9px;padding:8px 6px 6px;text-align:center;
+/* ============================================================
+   BARRA DE MANDO
+   Credito a la izquierda, giro al centro, apuesta a la derecha.
+   ============================================================ */
+.barra{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:12px;
+  margin-top:14px;
 }
-.readout .label{
-  font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;
-  color:rgba(244,235,214,.4);
-}
-.readout .value{
-  font-family:'Share Tech Mono',monospace;
-  font-size:clamp(18px,4.8vw,24px);
-  color:var(--oro);margin-top:2px;
-}
-.readout.gain .value{color:var(--neon)}
 
-/* ---------- controles ---------- */
-.controls{display:flex;gap:9px;margin-top:12px}
-.bet{
+.lado{display:flex;align-items:center;gap:14px}
+.lado.izq{justify-content:flex-start}
+.lado.der{justify-content:flex-end;gap:9px}
+
+.dato{display:flex;flex-direction:column;line-height:1.15}
+.et{
+  font-size:9px;letter-spacing:.24em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.42);
+}
+.nu{
+  font-family:'Share Tech Mono',monospace;
+  font-size:clamp(17px,2.4vw,24px);
+  color:var(--oro);
+}
+.dato.gan .nu{color:var(--neon)}
+
+/* boton circular de giro */
+.girar{
+  position:relative;
+  width:clamp(66px,8.4vw,92px);
+  height:clamp(66px,8.4vw,92px);
+  border-radius:50%;border:0;cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 28%, #FFB86B 0%, var(--neon) 46%, #C25400 100%);
+  color:#3A1A00;
+  box-shadow:
+    0 0 0 4px rgba(232,184,75,.22),
+    0 7px 0 #8A3D00,
+    0 14px 26px rgba(255,122,24,.30);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .08s, box-shadow .08s, filter .2s;
+}
+.girar svg{width:52%;height:52%;transition:transform .5s}
+.girar:hover:not(:disabled) svg{transform:rotate(60deg)}
+.girar:active:not(:disabled){transform:translateY(6px);box-shadow:0 1px 0 #8A3D00}
+.girar:disabled{filter:saturate(.5) brightness(.75);cursor:not-allowed}
+.girar .etiq{
+  position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;
+  color:rgba(244,235,214,.55);white-space:nowrap;
+}
+.girar.gratis{
+  background:radial-gradient(circle at 34% 28%, #FFE9A8 0%, var(--oro) 46%, #9A7412 100%);
+  box-shadow:0 0 0 4px rgba(255,122,24,.3), 0 7px 0 #6E5209, 0 14px 30px rgba(232,184,75,.4);
+}
+
+/* apuesta */
+.apuesta{
   display:flex;align-items:center;
   background:var(--panel);border:1px solid var(--acero);
   border-radius:11px;overflow:hidden;
 }
-.bet button{
-  width:36px;background:transparent;border:0;color:var(--crema);
-  font-size:21px;cursor:pointer;font-family:inherit;
+.apuesta button{
+  width:32px;height:34px;background:transparent;border:0;
+  color:var(--crema);font-size:19px;cursor:pointer;font-family:inherit;
 }
-.bet button:hover:not(:disabled){background:rgba(255,122,24,.16)}
-.bet .amount{
-  min-width:50px;text-align:center;
-  font-family:'Share Tech Mono',monospace;font-size:18px;
-}
-.spin{
-  flex:1;
-  font-family:'Bungee',cursive;
-  font-size:clamp(14px,3.8vw,18px);
-  color:#2B1200;
-  background:linear-gradient(180deg,#FFA24D 0%,var(--neon) 55%,#D45F00 100%);
-  border:0;border-radius:11px;padding:13px 8px;cursor:pointer;
-  box-shadow:0 5px 0 #8A3D00,0 10px 22px rgba(255,122,24,.25);
-  transition:transform .08s,box-shadow .08s;
-}
-.spin:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #8A3D00}
-.spin:disabled{opacity:.45;cursor:not-allowed}
+.apuesta button:hover:not(:disabled){background:rgba(255,122,24,.18)}
+.apuesta button:disabled{opacity:.35;cursor:not-allowed}
+.apuesta .nu{min-width:44px;text-align:center;font-size:17px;color:var(--crema)}
+
 button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
+
+/* boton de informacion en la marquesina */
+.info-btn{
+  position:absolute;top:2px;right:0;
+  width:28px;height:28px;border-radius:50%;
+  background:transparent;border:1px solid var(--acero);
+  color:rgba(244,235,214,.55);
+  font-family:'Bungee',cursive;font-size:13px;cursor:pointer;
+  transition:border-color .2s,color .2s;
+}
+.info-btn:hover{border-color:var(--neon);color:var(--neon)}
 
 /* ---------- mensajes ---------- */
 .message{margin-top:11px;min-height:20px;text-align:center;font-size:15px;color:rgba(244,235,214,.6)}
 .message.win{color:var(--neon);font-weight:700}
 .message.free{color:var(--oro);font-weight:700}
 
-/* ---------- tabla de pagos ---------- */
-.paytable{
-  width:100%;max-width:min(1180px, 168vh);margin-top:20px;
-  background:rgba(42,29,18,.5);border:1px solid var(--acero);
-  border-radius:15px;padding:16px;
+/* ============================================================
+   PANEL DE INFORMACION
+   ============================================================ */
+.modal{
+  position:fixed;inset:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  padding:18px;
+  background:rgba(10,6,3,.72);
+  backdrop-filter:blur(3px);
+  animation:aparecer .18s ease-out;
 }
-.paytable h2{
+.modal[hidden]{display:none}
+@keyframes aparecer{from{opacity:0}to{opacity:1}}
+
+.hoja{
+  width:100%;max-width:620px;max-height:86vh;
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#3A2A17 0%, #241A0C 100%);
+  border:2px solid var(--acero);border-radius:18px;
+  box-shadow:0 0 0 4px rgba(232,184,75,.10), 0 28px 60px rgba(0,0,0,.7);
+  animation:subir .24s cubic-bezier(.34,1.4,.64,1);
+}
+@keyframes subir{from{transform:translateY(22px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+
+.hoja-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--acero);
+}
+.hoja-top h2{
+  font-family:'Bungee',cursive;font-size:16px;letter-spacing:.04em;
+  color:var(--crema);font-weight:400;
+}
+.cerrar{
+  width:32px;height:32px;border-radius:50%;
+  background:transparent;border:1px solid var(--acero);
+  color:rgba(244,235,214,.6);font-size:20px;line-height:1;cursor:pointer;
+}
+.cerrar:hover{border-color:var(--neon);color:var(--neon)}
+
+.hoja-cuerpo{padding:16px 18px 20px;overflow-y:auto}
+.hoja-cuerpo h3{
   font-size:11px;letter-spacing:.3em;text-transform:uppercase;font-weight:600;
-  color:rgba(244,235,214,.42);margin-bottom:11px;
+  color:var(--oro);margin:18px 0 8px;
 }
-.ptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:6px}
+.hoja-cuerpo h3:first-child{margin-top:0}
+.pie{font-size:13px;color:rgba(244,235,214,.42);margin-bottom:9px}
+
+.ptgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:6px}
 .ptrow{
   display:flex;align-items:center;gap:9px;
-  background:rgba(21,15,8,.6);border-radius:8px;padding:6px 9px;
+  background:rgba(21,15,8,.6);border-radius:8px;padding:6px 10px;
 }
 .ptrow svg,
-.ptrow img.art{width:28px;height:28px;flex-shrink:0;object-fit:contain}
+.ptrow img.art{width:30px;height:30px;flex-shrink:0;object-fit:contain}
 .ptrow .nums{
   font-family:'Share Tech Mono',monospace;font-size:12px;
-  color:var(--oro);margin-left:auto;text-align:right;line-height:1.35;
+  color:var(--oro);margin-left:auto;text-align:right;
 }
-.note{margin-top:11px;font-size:13px;color:rgba(244,235,214,.4);line-height:1.55}
 
-/* ---------- barra inferior ---------- */
-.utility{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
-.utility button{
+.reglas{list-style:none;display:flex;flex-direction:column;gap:7px}
+.reglas li{
+  font-size:15px;line-height:1.5;color:rgba(244,235,214,.72);
+  padding-left:16px;position:relative;
+}
+.reglas li::before{
+  content:'';position:absolute;left:0;top:9px;
+  width:6px;height:6px;border-radius:50%;background:var(--neon);
+}
+.reglas b{color:var(--crema)}
+
+.fichas{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px}
+.ficha{
+  background:rgba(21,15,8,.6);border-radius:9px;padding:9px 11px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.ficha span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(244,235,214,.42)}
+.ficha b{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--crema);font-weight:400}
+
+.aviso{
+  margin-top:16px;font-size:12px;line-height:1.6;
+  color:rgba(244,235,214,.34);text-align:center;
+}
+.acciones{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.acciones button{
   background:transparent;border:1px solid var(--acero);
-  color:rgba(244,235,214,.58);border-radius:18px;
-  padding:6px 15px;font-family:inherit;font-size:14px;cursor:pointer;
+  color:rgba(244,235,214,.6);border-radius:18px;
+  padding:7px 16px;font-family:inherit;font-size:14px;cursor:pointer;
 }
-.utility button:hover{border-color:var(--neon);color:var(--neon)}
-
-.disclaimer{
-  max-width:620px;margin-top:16px;text-align:center;
-  font-size:12px;color:rgba(244,235,214,.28);line-height:1.6;
-}
+.acciones button:hover{border-color:var(--neon);color:var(--neon)}
 
 @media (prefers-reduced-motion:reduce){
   .cell.nuevo,.cell.gana,.cell.sale,.combo.late,.total.grande .num{animation-duration:.01s}
   .personaje img{animation:none}
+  .modal,.hoja{animation:none}
   .personaje.celebra img{animation-duration:.01s}
 }

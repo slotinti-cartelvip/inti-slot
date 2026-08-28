@@ -13,79 +13,115 @@
 
 <div class="escena">
 
-<div class="cabinet">
-  <div class="marquee">
-    <div class="eyebrow">Rembrandt Games</div>
-    <h1>INTI</h1>
-    <div class="sub">Cascada &middot; 6&times;5 &middot; Multiplicadores</div>
-  </div>
+  <div class="cabinet">
 
-  <!-- El tablero contiene todo lo que se superpone: combo, total y aviso -->
-  <div class="board" id="board">
-
-    <!-- Contador de combo: aparece arriba durante las cascadas encadenadas -->
-    <div class="combo" id="combo">
-      <span class="lbl">Combo</span>
-      <span class="x" id="comboX">&times;1</span>
-      <span class="monto" id="comboMonto">+0</span>
+    <div class="marquee">
+      <div class="eyebrow">Rembrandt Games</div>
+      <h1>INTI</h1>
+      <button class="info-btn" id="infoBtn" aria-label="Informaci&oacute;n y tabla de pagos">i</button>
     </div>
 
-    <div class="grid" id="grid"></div>
+    <div class="board" id="board">
+      <div class="combo" id="combo">
+        <span class="lbl">Combo</span>
+        <span class="x" id="comboX">&times;1</span>
+        <span class="monto" id="comboMonto">+0</span>
+      </div>
 
-    <!-- Total: aparece abajo, grande, sin tapar el tablero -->
-    <div class="total" id="total">
-      <span class="cap" id="totalCap">Ganancia</span>
-      <span class="num" id="totalNum">0</span>
+      <div class="grid" id="grid"></div>
+
+      <div class="total" id="total">
+        <span class="cap" id="totalCap">Ganancia</span>
+        <span class="num" id="totalNum">0</span>
+      </div>
+
+      <div class="skiphint" id="skiphint">Toca para saltar</div>
     </div>
 
-    <!-- Aviso de que se puede saltar la animacion -->
-    <div class="skiphint" id="skiphint">Toca para saltar</div>
-  </div>
+    <!-- BARRA DE MANDO: cr&eacute;ditos a la izquierda, giro al centro, apuesta a la derecha -->
+    <div class="barra">
 
-  <div class="readouts">
-    <div class="readout"><div class="label">Cr&eacute;ditos</div><div class="value" id="credits">1000</div></div>
-    <div class="readout"><div class="label">Apuesta</div><div class="value" id="betView">10</div></div>
-    <div class="readout gain"><div class="label">Ganancia</div><div class="value" id="gain">0</div></div>
-  </div>
+      <div class="lado izq">
+        <div class="dato">
+          <span class="et">Cr&eacute;dito</span>
+          <span class="nu" id="credits">1000</span>
+        </div>
+        <div class="dato gan">
+          <span class="et">Ganancia</span>
+          <span class="nu" id="gain">0</span>
+        </div>
+      </div>
 
-  <div class="controls">
-    <div class="bet">
-      <button id="betDown" aria-label="Bajar apuesta">&minus;</button>
-      <span class="amount" id="betAmount">10</span>
-      <button id="betUp" aria-label="Subir apuesta">+</button>
+      <button class="girar" id="spin" aria-label="Girar">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <path d="M50 16 A34 34 0 1 1 22 31" fill="none" stroke="currentColor"
+                stroke-width="11" stroke-linecap="round"/>
+          <path d="M50 4 L50 28 L32 16 Z" fill="currentColor"/>
+        </svg>
+        <span class="etiq" id="spinTxt">Girar</span>
+      </button>
+
+      <div class="lado der">
+        <span class="et">Apuesta</span>
+        <div class="apuesta">
+          <button id="betDown" aria-label="Bajar apuesta">&minus;</button>
+          <span class="nu" id="betAmount">10</span>
+          <button id="betUp" aria-label="Subir apuesta">+</button>
+        </div>
+      </div>
+
     </div>
-    <button class="spin" id="spin">GIRAR</button>
+
+    <div class="message" id="message"></div>
   </div>
 
-  <div class="message" id="message">8 s&iacute;mbolos iguales o m&aacute;s pagan, caigan donde caigan</div>
-</div>
-
-<!-- El Ekeko: reposa, respira, y celebra cuando hay premio -->
-<div class="personaje" id="personaje" aria-hidden="true">
-  <div class="halo"></div>
-  <img src="img/ekeko-personaje.png" alt="" draggable="false">
-</div>
+  <div class="personaje" id="personaje" aria-hidden="true">
+    <div class="halo"></div>
+    <img src="img/ekeko-personaje.png" alt="" draggable="false">
+  </div>
 
 </div>
 
-<div class="paytable">
-  <h2>Tabla de pagos &middot; 8-9 / 10-11 / 12+</h2>
-  <div class="ptgrid" id="paytable"></div>
-  <div class="note">
-    No hay l&iacute;neas de pago: cuenta la cantidad total del mismo s&iacute;mbolo en pantalla.
-    Los s&iacute;mbolos que pagan desaparecen y caen otros encima, y se sigue pagando mientras salgan
-    combinaciones &mdash; cada ca&iacute;da encadenada sube el combo.
-    Los orbes naranjas suman su valor y multiplican todo lo ganado en esa secuencia.
-    Con 4 &iacute;dolos o m&aacute;s se activan 10 giros gratis. RTP 96,25%.
+<!-- ============ PANEL DE INFORMACION ============ -->
+<div class="modal" id="modal" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="modalTit">
+    <div class="hoja-top">
+      <h2 id="modalTit">Informaci&oacute;n</h2>
+      <button class="cerrar" id="cerrarModal" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <div class="hoja-cuerpo">
+      <h3>Tabla de pagos</h3>
+      <p class="pie">Seg&uacute;n cu&aacute;ntos s&iacute;mbolos iguales salgan: 8-9 / 10-11 / 12 o m&aacute;s</p>
+      <div class="ptgrid" id="paytable"></div>
+
+      <h3>C&oacute;mo se juega</h3>
+      <ul class="reglas">
+        <li>No hay l&iacute;neas de pago. Cuenta la <b>cantidad total</b> del mismo s&iacute;mbolo en pantalla, caiga donde caiga.</li>
+        <li>Con <b>8 iguales o m&aacute;s</b> pagas. Cuantos m&aacute;s salgan, mayor el multiplicador.</li>
+        <li>Los s&iacute;mbolos que pagan desaparecen y caen otros encima. Cada ca&iacute;da encadenada sube el <b>combo</b>.</li>
+        <li>Los <b>orbes naranjas</b> suman su valor entre s&iacute; y multiplican todo lo ganado en esa secuencia.</li>
+        <li>Con <b>4 Ekekos o m&aacute;s</b> se activan 10 giros gratis.</li>
+        <li>Toca el tablero para saltar la animaci&oacute;n. El resultado no cambia.</li>
+      </ul>
+
+      <h3>Datos del juego</h3>
+      <div class="fichas">
+        <div class="ficha"><span>RTP</span><b>96,09%</b></div>
+        <div class="ficha"><span>Volatilidad</span><b>Alta</b></div>
+        <div class="ficha"><span>Cuadr&iacute;cula</span><b>6&times;4</b></div>
+        <div class="ficha"><span>Premio m&aacute;ximo</span><b>7.400&times;</b></div>
+      </div>
+
+      <p class="aviso">Demo t&eacute;cnica. Los cr&eacute;ditos no tienen valor y no se juega dinero real.</p>
+
+      <div class="acciones">
+        <button id="recharge">Recargar cr&eacute;ditos</button>
+        <button id="soundToggle">Sonido: activado</button>
+      </div>
+    </div>
   </div>
 </div>
-
-<div class="utility">
-  <button id="recharge">Recargar cr&eacute;ditos de prueba</button>
-  <button id="soundToggle">Sonido: activado</button>
-</div>
-
-<p class="disclaimer">Demo t&eacute;cnica. Cr&eacute;ditos sin valor, no se juega dinero real.</p>
 
 <script src="engine.js"></script>
 <script src="symbols.js"></script>

@@ -215,6 +215,31 @@
      El dia que lo cambies por una animacion Lottie, este es el
      unico lugar del codigo que hay que tocar.
      ============================================================ */
+  function ekekoLanza() {
+    var p = $('personaje');
+    if (!p) return;
+    p.classList.remove('lanza');
+    void p.offsetWidth;
+    p.classList.add('lanza');
+    setTimeout(function () { p.classList.remove('lanza'); }, 600);
+    tono(760, 0.09, 0.05);
+    setTimeout(function () { tono(1040, 0.11, 0.045); }, 90);
+  }
+
+  /* Cuenta cuántos orbes hay entre las celdas indicadas.
+     Si aparece alguno, el Ekeko hace el gesto de entregarlo. */
+  function avisarOrbes(grid, posiciones) {
+    if (!posiciones || !posiciones.length) return 0;
+    var n = 0;
+    for (var i = 0; i < posiciones.length; i++) {
+      var p = posiciones[i].split('-');
+      var cel = grid[+p[0]][+p[1]];
+      if (cel && cel.t === 'orbe') n++;
+    }
+    if (n > 0) ekekoLanza();
+    return n;
+  }
+
   function ekekoCelebra() {
     var p = $('personaje');
     if (!p) return;
@@ -230,6 +255,7 @@
   async function reproducir(resultado) {
     pintar(resultado.gridInicial, todasLasPosiciones());
     tono(180, 0.06, 0.04);
+    avisarOrbes(resultado.gridInicial, todasLasPosiciones());
     if (resultado.pasos.length > 0) mostrarAviso();
     await espera(TIEMPOS.caidaInicial);
 
@@ -253,6 +279,7 @@
       if (saltar) break;
 
       pintar(paso.gridDespues, paso.nuevas);
+      avisarOrbes(paso.gridDespues, paso.nuevas);
       await espera(TIEMPOS.caidaCascada);
     }
 
@@ -376,14 +403,15 @@
     $('spin').disabled = v;
     $('betUp').disabled = v;
     $('betDown').disabled = v;
-    $('spin').textContent = girosGratisRestantes > 0 ? 'GRATIS ' + girosGratisRestantes : 'GIRAR';
+    var gratis = girosGratisRestantes > 0;
+    $('spinTxt').textContent = gratis ? 'Gratis ' + girosGratisRestantes : 'Girar';
+    $('spin').classList.toggle('gratis', gratis);
   }
 
   function cambiarApuesta(d) {
     if (ocupado || girosGratisRestantes > 0) return;
     idxApuesta = Math.min(APUESTAS.length - 1, Math.max(0, idxApuesta + d));
     $('betAmount').textContent = APUESTAS[idxApuesta];
-    $('betView').textContent = APUESTAS[idxApuesta];
   }
 
   /* ============================================================
@@ -449,8 +477,22 @@
     e.target.textContent = 'Sonido: ' + (sonido ? 'activado' : 'apagado');
   });
 
+  /* ---------- panel de información ---------- */
+  function abrirInfo() { $('modal').hidden = false; }
+  function cerrarInfo() { $('modal').hidden = true; }
+
+  $('infoBtn').addEventListener('click', abrirInfo);
+  $('cerrarModal').addEventListener('click', cerrarInfo);
+  $('modal').addEventListener('click', function (e) {
+    if (e.target === $('modal')) cerrarInfo();   // clic fuera de la hoja
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') cerrarInfo();
+  });
+
   document.addEventListener('keydown', function (e) {
     if (e.code !== 'Space' || e.target !== document.body) return;
+    if (!$('modal').hidden) return;
     e.preventDefault();
     if (ocupado) pedirSalto();   // espacio durante la animación = saltar
     else jugar();                // espacio en reposo = girar
