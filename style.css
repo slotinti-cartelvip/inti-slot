@@ -158,11 +158,54 @@ body{
   100%{transform:translateY(0) rotate(0deg) scale(1)}
 }
 
+/* ============================================================
+   VERTICAL (celular de pie)
+   ------------------------------------------------------------
+   El personaje NO se oculta: se coloca detrás del gabinete,
+   arriba a la derecha, asomando por el borde. Al ir en posición
+   absoluta no consume espacio vertical, que en un celular es
+   justo lo que falta.
+   ============================================================ */
 @media (max-width:880px){
-  body{overflow:auto;height:auto;min-height:100vh}
-  .escena{height:auto;flex-direction:column}
+  body{overflow-y:auto;overflow-x:hidden;height:auto;min-height:100vh}
+
+  .escena{
+    position:relative;
+    height:auto;
+    flex-direction:column;
+    padding-top:4vh;          /* aire para que el Ekeko asome */
+  }
   .escena .cabinet{width:100%;max-width:560px}
-  .personaje{display:none}
+
+  .personaje{
+    display:flex;
+    position:absolute;
+    top:0;
+    right:-13vw;
+    margin-left:0;
+    z-index:-1;               /* detrás del gabinete */
+  }
+  .pj-capa{
+    height:min(30vh, 260px);
+    max-width:none;
+  }
+  .personaje .halo{width:150%;padding-bottom:150%}
+}
+
+/* ============================================================
+   HORIZONTAL BAJITO (celular acostado)
+   ------------------------------------------------------------
+   Mucho ancho y poquísimo alto. Aquí manda la altura: si no se
+   limita, el personaje y el tablero se pisan.
+   ============================================================ */
+@media (max-height:520px) and (orientation:landscape){
+  body{padding:6px}
+  .escena{padding-top:0}
+  .marquee{padding:2px 0 6px}
+  .marquee h1{font-size:clamp(16px,3.4vh,24px)}
+  .marquee .sub{display:none}
+  .pj-capa{height:min(78vh, 380px)}
+  .personaje{margin-left:-14px}
 }
 
 /* ---------- gabinete ---------- */
@@ -282,6 +325,72 @@ body{
 
 @media (prefers-reduced-motion:reduce){
   .chispa,.board .brillo{display:none}
+}
+
+
+/* ============================================================
+   ORBE MULTIPLICADOR
+   ------------------------------------------------------------
+   El Ekeko lo lanza y cae sobre una casilla. Es puro teatro:
+   el valor ya lo decidió el motor antes de animar nada.
+   ============================================================ */
+.orbe-mult{
+  position:absolute;
+  left:50%;top:50%;
+  width:78%;aspect-ratio:1;
+  transform:translate(-50%,-50%) scale(.2);
+  border-radius:50%;
+  z-index:6;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 34% 28%, #FFE9A8 0%, #FFB33C 38%, var(--neon) 62%, #8E3200 100%);
+  box-shadow:
+    0 0 0 3px rgba(255,233,168,.55),
+    0 0 26px rgba(255,150,40,.85),
+    inset 0 -5px 12px rgba(0,0,0,.4);
+  opacity:0;
+  animation:orbeCae .52s cubic-bezier(.3,1.5,.5,1) forwards;
+}
+.orbe-mult span{
+  font-family:'Bungee',cursive;
+  font-size:clamp(12px,3.1vw,20px);
+  color:#3A1A00;
+  text-shadow:0 1px 0 rgba(255,255,255,.5);
+}
+@keyframes orbeCae{
+  0%  {transform:translate(-50%,-190%) scale(.35);opacity:0}
+  55% {opacity:1}
+  70% {transform:translate(-50%,-50%) scale(1.18)}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+}
+
+/* late mientras espera a que termine la secuencia */
+.orbe-mult.espera{animation:orbeLate 1.1s ease-in-out infinite}
+@keyframes orbeLate{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%    {transform:translate(-50%,-50%) scale(1.09)}
+}
+
+/* columna de luz por donde baja el orbe */
+.rayo-mult{
+  position:absolute;top:0;bottom:0;
+  width:26%;z-index:5;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,233,168,.55) 35%,
+    rgba(255,255,255,.85) 60%,
+    rgba(255,180,60,0) 100%);
+  filter:blur(3px);
+  animation:rayoBaja .5s ease-out forwards;
+}
+@keyframes rayoBaja{
+  0%  {opacity:0;transform:scaleY(.3)}
+  35% {opacity:1}
+  100%{opacity:0;transform:scaleY(1)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .orbe-mult,.rayo-mult{animation-duration:.01s}
+  .orbe-mult.espera{animation:none}
 }
 
 /* ---------- contador de combo ---------- */

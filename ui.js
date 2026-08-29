@@ -14,15 +14,38 @@
   var APUESTAS = [1, 5, 10, 25, 50];
   var CREDITOS_INICIALES = 1000;
 
+  /* ============================================================
+     VELOCIDAD DEL JUEGO
+     ------------------------------------------------------------
+     Todos los tiempos en milisegundos, en un solo lugar.
+     Los de la cascada están medidos sobre la referencia
+     comercial: el resaltado dura cerca de un segundo, el
+     estallido un tercio, y el relleno es rápido.
+
+     Para acelerar TODO el juego de una vez, sube RITMO:
+       1.0 = normal   0.7 = 30% más rápido   1.3 = más pausado
+     ============================================================ */
+  var RITMO = 1.0;
+
   var TIEMPOS = {
     caidaInicial: 380,
-    resaltarGanadores: 620,
-    estallido: 300,
-    caidaCascada: 360,
-    revelarMultiplicador: 850,
+    resaltarGanadores: 980,   // el jugador tiene que alcanzar a leer qué ganó
+    estallido: 330,
+    caidaCascada: 300,
     mostrarTotal: 900,
-    entreGirosGratis: 1200
+    entreGirosGratis: 1200,
+
+    /* --- coreografía del multiplicador --- */
+    antesDelOrbe: 700,        // el Ekeko toma impulso antes de que baje
+    rayoAntesDelOrbe: 260,    // la luz baja primero, el orbe después
+    orbeAntesDelConteo: 620,  // el orbe se deja ver antes de que trepe el número
+    despuesDelConteo: 500     // aire al final para leer el total
   };
+
+  // el RITMO escala todos los tiempos de una sola vez
+  Object.keys(TIEMPOS).forEach(function (k) {
+    TIEMPOS[k] = Math.round(TIEMPOS[k] * RITMO);
+  });
 
   /* El perfil de RTP lo define el panel de operador (perfiles.js).
      Se lee UNA vez al cargar: cambiar de perfil a mitad de partida
@@ -336,19 +359,84 @@
     }
 
     if (resultado.pagoCascada > 0 && resultado.multTotal > 0) {
-      var conMult = INTI.redondear(resultado.pagoCascada * resultado.multTotal);
-      mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada, true);
-      $('totalNum').classList.add('contando');
-      animarNumero($('totalNum'), resultado.pagoCascada, conMult,
-                   duracionConteo(resultado.multTotal), function () {
-        $('totalNum').classList.remove('contando');
-      });
-      barrerLuz();
-      fanfarria(resultado.multTotal);
-      ekekoLanza();
-      // el gesto dura más que el respiro anterior: le damos su tiempo
-      await espera(Math.max(TIEMPOS.revelarMultiplicador, DURACION_LANZA_MS));
+      await revelarMultiplicador(resultado);
     }
+  }
+
+  /* ============================================================
+     REVELAR EL MULTIPLICADOR
+     ------------------------------------------------------------
+     El orden importa y está copiado del ritmo de los slots
+     comerciales:
+
+       1. el Ekeko toma impulso y lanza
+       2. baja una columna de luz sobre una casilla
+       3. el orbe aterriza y late
+       4. RECIÉN AHÍ el premio trepa hasta el total
+
+     Ese respiro entre el gesto y el número es lo que hace que
+     se sienta un premio y no un dato que cambió en pantalla.
+     ============================================================ */
+  async function revelarMultiplicador(resultado) {
+    var total = INTI.redondear(resultado.pagoCascada * resultado.multTotal);
+
+    // 1. el gesto
+    ekekoLanza();
+    mostrarTotal('Ganancia', resultado.pagoCascada, false);
+    await espera(TIEMPOS.antesDelOrbe);
+
+    // 2 y 3. la luz y el orbe sobre una casilla al azar
+    var celda = celdaAlAzar();
+    if (celda) {
+      lanzarRayo(celda);
+      await espera(TIEMPOS.rayoAntesDelOrbe);
+      var orbe = ponerOrbe(celda, resultado.multTotal);
+      tono(880, 0.12, 0.06);
+      await espera(TIEMPOS.orbeAntesDelConteo);
+      if (orbe) orbe.classList.add('espera');
+    }
+
+    // 4. el premio trepa
+    mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada, true);
+    $('totalNum').classList.add('contando');
+    barrerLuz();
+    fanfarria(resultado.multTotal);
+    animarNumero($('totalNum'), resultado.pagoCascada, total,
+                 duracionConteo(resultado.multTotal), function () {
+      $('totalNum').classList.remove('contando');
+    });
+
+    await espera(duracionConteo(resultado.multTotal) + TIEMPOS.despuesDelConteo);
+  }
+
+  /* Elige una casilla del tablero para que caiga el orbe.
+     Evita las dos columnas del borde para que no quede cortado. */
+  function celdaAlAzar() {
+    var c = 1 + Math.floor(Math.random() * (motor.cfg.COLS - 2));
+    var r = Math.floor(Math.random() * motor.cfg.ROWS);
+    return document.querySelector('[data-pos="' + c + '-' + r + '"]');
+  }
+
+  function lanzarRayo(celda) {
+    var g = $('grid');
+    if (!g) return;
+    var rayo = document.createElement('div');
+    rayo.className = 'rayo-mult';
+    var caja = celda.getBoundingClientRect();
+    var cajaG = g.getBoundingClientRect();
+    rayo.style.left = (caja.left - cajaG.left + caja.width * 0.37) + 'px';
+    rayo.style.width = (caja.width * 0.26) + 'px';
+    g.appendChild(rayo);
+    setTimeout(function () { rayo.remove(); }, 600);
+  }
+
+  function ponerOrbe(celda, valor) {
+    var o = document.createElement('div');
+    o.className = 'orbe-mult';
+    o.innerHTML = '<span>' + valor + 'x</span>';
+    celda.appendChild(o);
+    chispear(celda, 8);
+    return o;
   }
 
   /* ============================================================
