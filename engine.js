@@ -22,16 +22,25 @@
     ROWS: 4,                  // filas
     MIN_PARA_PAGAR: 8,        // cuántos símbolos iguales hacen falta
     TRAMOS: [[8, 9], [10, 11], [12, 24]],  // rangos de la tabla de pagos
-    PROB_ORBE: 0.008,         // probabilidad de orbe por celda nueva
-    PROB_ORBE_GRATIS: 0.018,  // ídem durante giros gratis
     PROB_SCATTER: 0.020,      // solo en la caída inicial
     SCATTERS_PARA_GRATIS: 4,
     GIROS_GRATIS: 10,
     MAX_CASCADAS: 50,         // tope de seguridad contra bucles infinitos
-    ORBES: [
-      { v: 2, p: 34 }, { v: 3, p: 24 }, { v: 4, p: 16 }, { v: 5, p: 11 },
-      { v: 6, p: 7 }, { v: 8, p: 4 }, { v: 10, p: 2.4 }, { v: 15, p: 1.2 },
-      { v: 25, p: 0.6 }, { v: 50, p: 0.25 }, { v: 100, p: 0.1 }, { v: 500, p: 0.02 }
+
+    /* ---------- EL MULTIPLICADOR DEL EKEKO ----------
+       Ya no caen orbes en el tablero. Cuando una jugada paga,
+       el Ekeko PUEDE aparecer y multiplicar lo ganado.
+
+       PROB_MULT es la perilla principal: sube o baja el RTP
+       sin tocar la tabla de pagos ni la frecuencia de premio.
+       Solo se sortea si la jugada ya ganó algo: nunca inventa
+       un premio de la nada. */
+    PROB_MULT: 0.1169,        // 11,69% de las jugadas premiadas — calibrado para RTP 96%
+    PROB_MULT_GRATIS: 0.30,   // más seguido en los giros gratis
+    MULTIPLICADORES: [
+      { v: 2, p: 35 }, { v: 3, p: 25 }, { v: 5, p: 18 }, { v: 8, p: 10 },
+      { v: 10, p: 6 }, { v: 15, p: 3 }, { v: 25, p: 2 }, { v: 50, p: 0.8 },
+      { v: 100, p: 0.3 }, { v: 500, p: 0.05 }
     ]
   };
 
@@ -40,14 +49,14 @@
      peso  = qué tan seguido aparece (mayor = más común)
      Calibrado a RTP 96,25% — si tocas un número, vuelve a correr sim.js */
   var SIMBOLOS = [
-    { id: 'j',       nombre: 'J',       color: '#3AA9E8', tipo: 'letra',   texto: 'J',   pagos: [1.40, 2.90, 5.80],   peso: 24 },
-    { id: 'q',       nombre: 'Q',       color: '#3FC97E', tipo: 'letra',   texto: 'Q',   pagos: [1.70, 3.40, 6.80],   peso: 22 },
-    { id: 'k',       nombre: 'K',       color: '#B15CD8', tipo: 'letra',   texto: 'K',   pagos: [2.20, 4.40, 8.70],   peso: 20 },
-    { id: 'bs5',     nombre: '5 Bs',    color: '#F0A93B', tipo: 'billete', texto: '5',   pagos: [2.90, 5.80, 12.00],  peso: 17 },
-    { id: 'bs10',    nombre: '10 Bs',   color: '#E0453F', tipo: 'billete', texto: '10',  pagos: [4.40, 8.70, 21.00],  peso: 14 },
-    { id: 'bs100',   nombre: '100 Bs',  color: '#2FD3C4', tipo: 'billete', texto: '100', pagos: [5.80, 12.00, 27.00], peso: 10 },
-    { id: 'chulito', nombre: 'Chulito', color: '#FF7A18', tipo: 'imagen',  archivo: 'img/chulito.png', pagos: [11.00, 22.00, 55.00],  peso: 7 },
-    { id: 'casita',  nombre: 'Casita',  color: '#E8703A', tipo: 'imagen',  archivo: 'img/casita.png',  pagos: [27.00, 55.00, 138.00], peso: 4 }
+    { id: 'j',       nombre: 'J',       color: '#3AA9E8', tipo: 'letra',   texto: 'J',   pagos: [1.55, 3.20, 6.40],   peso: 24 },
+    { id: 'q',       nombre: 'Q',       color: '#3FC97E', tipo: 'letra',   texto: 'Q',   pagos: [1.90, 3.75, 7.50],   peso: 22 },
+    { id: 'k',       nombre: 'K',       color: '#B15CD8', tipo: 'letra',   texto: 'K',   pagos: [2.45, 4.85, 9.60],   peso: 20 },
+    { id: 'bs5',     nombre: '5 Bs',    color: '#F0A93B', tipo: 'billete', texto: '5',   pagos: [3.20, 6.40, 13.30],  peso: 17 },
+    { id: 'bs10',    nombre: '10 Bs',   color: '#E0453F', tipo: 'billete', texto: '10',  pagos: [4.85, 9.60, 23.20],  peso: 14 },
+    { id: 'bs100',   nombre: '100 Bs',  color: '#2FD3C4', tipo: 'billete', texto: '100', pagos: [6.40, 13.30, 29.80], peso: 10 },
+    { id: 'chulito', nombre: 'Chulito', color: '#FF7A18', tipo: 'imagen',  archivo: 'img/chulito.png', pagos: [12.10, 24.30, 60.70],  peso: 7 },
+    { id: 'casita',  nombre: 'Casita',  color: '#E8703A', tipo: 'imagen',  archivo: 'img/casita.png',  pagos: [29.80, 60.70, 152.40], peso: 4 }
   ];
 
   /* ============================================================
@@ -87,7 +96,7 @@
     var porId = {};
     simbolos.forEach(function (s) { porId[s.id] = s; });
     var pesoTotal = simbolos.reduce(function (a, s) { return a + s.peso; }, 0);
-    var pesoOrbes = cfg.ORBES.reduce(function (a, o) { return a + o.p; }, 0);
+    var pesoMult = cfg.MULTIPLICADORES.reduce(function (a, o) { return a + o.p; }, 0);
 
     /* ---------- generación ---------- */
     function simboloAlAzar() {
@@ -96,16 +105,18 @@
       return simbolos[simbolos.length - 1];
     }
 
-    function valorOrbeAlAzar() {
-      var r = rnd() * pesoOrbes;
-      for (var i = 0; i < cfg.ORBES.length; i++) { r -= cfg.ORBES[i].p; if (r <= 0) return cfg.ORBES[i].v; }
-      return cfg.ORBES[cfg.ORBES.length - 1].v;
+    function valorMultAlAzar() {
+      var r = rnd() * pesoMult;
+      for (var i = 0; i < cfg.MULTIPLICADORES.length; i++) {
+        r -= cfg.MULTIPLICADORES[i].p;
+        if (r <= 0) return cfg.MULTIPLICADORES[i].v;
+      }
+      return cfg.MULTIPLICADORES[cfg.MULTIPLICADORES.length - 1].v;
     }
 
+    /* El tablero solo tiene símbolos e ídolos. Los orbes se fueron. */
     function celdaNueva(esCaidaInicial, esGratis) {
-      var probOrbe = esGratis ? cfg.PROB_ORBE_GRATIS : cfg.PROB_ORBE;
       if (esCaidaInicial && rnd() < cfg.PROB_SCATTER) return { t: 'scatter' };
-      if (rnd() < probOrbe) return { t: 'orbe', v: valorOrbeAlAzar() };
       return { t: 'sim', id: simboloAlAzar().id };
     }
 
@@ -146,13 +157,7 @@
       return n;
     }
 
-    function listaOrbes(grid) {
-      var out = [];
-      for (var c = 0; c < grid.length; c++)
-        for (var r = 0; r < grid[c].length; r++)
-          if (grid[c][r].t === 'orbe') out.push(grid[c][r].v);
-      return out;
-    }
+
 
     /* ---------- evaluación de una caída ---------- */
     function evaluar(grid, apuesta) {
@@ -169,8 +174,8 @@
     }
 
     /* ---------- cascada: quitar, dejar caer, rellenar ----------
-       Los orbes y los scatters NUNCA se quitan: se quedan hasta
-       que termina la secuencia. */
+       Los ídolos nunca se quitan: se quedan hasta que termina
+       la secuencia. */
     function derrumbar(grid, ganadores, esGratis) {
       var nuevaG = [];
       var posNuevas = [];
@@ -226,10 +231,16 @@
         grid = res.grid;
       }
 
-      var multiplicadores = listaOrbes(grid);
-      var multTotal = multiplicadores.reduce(function (a, b) { return a + b; }, 0);
       pagoCascada = redondear(pagoCascada);
-      var pagoTotal = (pagoCascada > 0 && multTotal > 0) ? redondear(pagoCascada * multTotal) : pagoCascada;
+
+      /* El Ekeko solo aparece si la jugada ya ganó algo.
+         Nunca crea un premio donde no lo había. */
+      var multTotal = 0;
+      if (pagoCascada > 0) {
+        var probMult = esGratis ? cfg.PROB_MULT_GRATIS : cfg.PROB_MULT;
+        if (rnd() < probMult) multTotal = valorMultAlAzar();
+      }
+      var pagoTotal = multTotal > 0 ? redondear(pagoCascada * multTotal) : pagoCascada;
 
       return {
         apuesta: apuesta,
@@ -238,7 +249,6 @@
         gridFinal: grid,
         pasos: pasos,
         scatters: scatters,
-        multiplicadores: multiplicadores,
         multTotal: multTotal,
         pagoCascada: pagoCascada,
         pagoTotal: pagoTotal,
@@ -272,8 +282,8 @@
       _: {
         contar: contar, tramo: tramo, evaluar: evaluar, derrumbar: derrumbar,
         nuevaGrid: nuevaGrid, celdaNueva: celdaNueva,
-        contarScatters: contarScatters, listaOrbes: listaOrbes,
-        simboloAlAzar: simboloAlAzar, valorOrbeAlAzar: valorOrbeAlAzar
+        contarScatters: contarScatters,
+        simboloAlAzar: simboloAlAzar, valorMultAlAzar: valorMultAlAzar
       }
     };
   }
@@ -287,7 +297,10 @@
     clonar: clonar
   };
 
+  /* Se publica SIEMPRE en el objeto global, y además como módulo
+     si el entorno lo soporta. Así el mismo archivo sirve en el
+     navegador, en Node y dentro de un Worker de Cloudflare. */
+  global.INTI = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
-  else global.INTI = API;
 
 })(typeof window !== 'undefined' ? window : globalThis);

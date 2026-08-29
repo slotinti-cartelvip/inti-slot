@@ -33,11 +33,13 @@ function cerca(a, b, tol, msg) {
 function cierto(v, msg) { if (!v) throw new Error(msg || 'esperaba verdadero'); }
 
 /* ---------- helper: armar una cuadrícula a mano ----------
-   Se pasa un arreglo de 5 textos (las filas, de arriba a abajo),
+   Se pasa un arreglo de textos (las filas, de arriba a abajo),
    con 6 caracteres cada uno:
      c=copa  t=triangulo  h=hexagono  p=pentagono
      r=rombo u=tumi       k=chakana   i=inti
-     S=scatter   M=orbe de valor 5    N=orbe de valor 10        */
+     S=ídolo (scatter)
+   El multiplicador ya no vive en el tablero — lo entrega el
+   Ekeko aparte, así que aquí ya no hace falta letra para él. */
 var LETRAS = {
   c: 'j', t: 'q', h: 'k', p: 'bs5',
   r: 'bs10', u: 'bs100', k: 'chulito', i: 'casita'
@@ -51,8 +53,6 @@ function gridDe(filas) {
     for (var r = 0; r < filas.length; r++) {
       var ch = filas[r][c];
       if (ch === 'S') col.push({ t: 'scatter' });
-      else if (ch === 'M') col.push({ t: 'orbe', v: 5 });
-      else if (ch === 'N') col.push({ t: 'orbe', v: 10 });
       else col.push({ t: 'sim', id: LETRAS[ch] });
     }
     g.push(col);
@@ -104,12 +104,12 @@ probar('se genera con 6 columnas de 4 filas', function () {
   g.forEach(function (col, i) { igual(col.length, 4, 'filas de la columna ' + i); });
 });
 
-probar('toda celda es símbolo, orbe o scatter', function () {
+probar('toda celda es símbolo o ídolo', function () {
   for (var n = 0; n < 200; n++) {
     var g = motor._.nuevaGrid(false);
     g.forEach(function (col) {
       col.forEach(function (cel) {
-        cierto(['sim', 'orbe', 'scatter'].indexOf(cel.t) >= 0, 'tipo raro: ' + cel.t);
+        cierto(['sim', 'scatter'].indexOf(cel.t) >= 0, 'tipo raro: ' + cel.t);
       });
     });
   }
@@ -140,17 +140,16 @@ probar('cuenta bien los símbolos del tablero', function () {
   igual(m.q, 6);
 });
 
-probar('los orbes y scatters no se cuentan como símbolos', function () {
+probar('los ídolos no se cuentan como símbolos', function () {
   var g = gridDe([
-    'ccccMS',
+    'cccccS',
     'cccccc',
     'tttttt',
     'hhhhhh'
   ]);
   var m = motor._.contar(g);
-  igual(m.j, 10, 'jotas');
-  igual(m.orbe, undefined, 'orbe no debe contarse');
-  igual(m.scatter, undefined, 'scatter no debe contarse');
+  igual(m.j, 11, 'jotas');
+  igual(m.scatter, undefined, 'scatter no debe contarse como símbolo');
 });
 
 probar('el tramo se elige por cantidad: 8-9 → 0, 10-11 → 1, 12+ → 2', function () {
@@ -196,7 +195,7 @@ probar('con 8 símbolos iguales paga el tramo 0 × apuesta', function () {
   igual(motor._.contar(g).j, 8, 'preparación');
   var ev = motor._.evaluar(g, 10);
   igual(ev.ganadores, ['j']);
-  igual(ev.pago, INTI.redondear(1.40 * 10), 'j tramo 0 = 1.40 × 10');
+  igual(ev.pago, INTI.redondear(1.55 * 10), 'j tramo 0 = 1.55 × 10');
 });
 
 probar('con 12 símbolos iguales paga el tramo 2', function () {
@@ -208,7 +207,7 @@ probar('con 12 símbolos iguales paga el tramo 2', function () {
   ]);
   igual(motor._.contar(g).casita, 12, 'preparación');
   var ev = motor._.evaluar(g, 10);
-  igual(ev.pago, INTI.redondear(138 * 10), 'casita tramo 2 = 138 × 10');
+  igual(ev.pago, INTI.redondear(152.40 * 10), 'casita tramo 2 = 152.40 × 10');
 });
 
 probar('varios símbolos ganadores a la vez suman sus pagos', function () {
@@ -222,7 +221,7 @@ probar('varios símbolos ganadores a la vez suman sus pagos', function () {
   igual(m.j, 8, 'jotas'); igual(m.casita, 10, 'intis');
   var ev = motor._.evaluar(g, 10);
   igual(ev.ganadores.sort(), ['casita', 'j']);
-  igual(ev.pago, INTI.redondear(1.40 * 10 + 55 * 10), 'j tramo 0 + casita tramo 1');
+  igual(ev.pago, INTI.redondear(1.55 * 10 + 60.70 * 10), 'j tramo 0 + casita tramo 1');
 });
 
 probar('el pago escala de forma lineal con la apuesta', function () {
@@ -266,20 +265,6 @@ probar('las celdas nuevas entran por arriba', function () {
   igual(res.nuevas.filter(function (p) { return p.indexOf('0-') === 0; }).sort(), ['0-0', '0-1']);
 });
 
-probar('los orbes NO se eliminan en la cascada', function () {
-  var g = gridDe([
-    'ccccMc',
-    'cccNcc',
-    'tttttt',
-    'rrrrrr'
-  ]);
-  var antes = motor._.listaOrbes(g).sort(function (a, b) { return a - b; });
-  igual(antes, [5, 10], 'preparación');
-  var res = motor._.derrumbar(g, ['j'], false);
-  var despues = motor._.listaOrbes(res.grid);
-  cierto(despues.indexOf(5) >= 0 && despues.indexOf(10) >= 0, 'se perdió algún orbe');
-});
-
 probar('los scatters NO se eliminan en la cascada', function () {
   var g = gridDe(['ccccSc', 'cccccc', 'tttttt', 'rrrrrr']);
   var res = motor._.derrumbar(g, ['j'], false);
@@ -287,31 +272,45 @@ probar('los scatters NO se eliminan en la cascada', function () {
 });
 
 /* ============================================================
-   6. MULTIPLICADORES
+   6. EL MULTIPLICADOR DEL EKEKO
+   ------------------------------------------------------------
+   Ya no vive en el tablero: es un valor que se sortea aparte,
+   y solo si la jugada ya ganó algo.
    ============================================================ */
-grupo('6. Multiplicadores');
+grupo('6. El multiplicador del Ekeko');
 
-probar('los valores de orbe salen siempre de la tabla configurada', function () {
-  var validos = INTI.CONFIG.ORBES.map(function (o) { return o.v; });
+probar('los valores del multiplicador salen siempre de la tabla configurada', function () {
+  var validos = INTI.CONFIG.MULTIPLICADORES.map(function (o) { return o.v; });
   for (var i = 0; i < 20000; i++) {
-    var v = motor._.valorOrbeAlAzar();
-    cierto(validos.indexOf(v) >= 0, 'valor de orbe inválido: ' + v);
+    var v = motor._.valorMultAlAzar();
+    cierto(validos.indexOf(v) >= 0, 'valor de multiplicador inválido: ' + v);
   }
 });
 
-probar('sin ganancia, el multiplicador no inventa premio', function () {
+probar('sin ganancia, el multiplicador nunca aparece', function () {
+  // PROB_MULT en 100% y sin scatters: si el tablero no paga nada,
+  // el multiplicador no debe sortearse aunque la probabilidad sea total.
   var m = INTI.crearMotor({
     semilla: 5,
-    config: { PROB_ORBE: 1.0, PROB_SCATTER: 0 }  // tablero lleno de orbes
+    config: { PROB_MULT: 1.0, PROB_SCATTER: 0 }
   });
-  var r = m.girar(10);
-  igual(r.pagoCascada, 0, 'sin símbolos no hay cascada');
-  igual(r.pagoTotal, 0, 'el pago total debe ser 0 aunque haya multiplicadores');
-  cierto(r.multTotal > 0, 'preparación: debería haber orbes');
+  var vistoAlguno = false, vistoSinPago = false;
+  for (var i = 0; i < 3000; i++) {
+    var r = m.girar(10);
+    if (r.pagoCascada === 0) {
+      vistoSinPago = true;
+      igual(r.multTotal, 0, 'sin pago no debería haber multiplicador');
+      igual(r.pagoTotal, 0, 'sin pago el total debe ser 0');
+    } else {
+      vistoAlguno = true;
+    }
+  }
+  cierto(vistoSinPago, 'preparación: debería haber giros sin pago');
+  cierto(vistoAlguno, 'preparación: debería haber giros con pago');
 });
 
-probar('con ganancia, el total = cascada × suma de orbes', function () {
-  var m = INTI.crearMotor({ semilla: 2024 });
+probar('con multiplicador, el total = cascada × multiplicador', function () {
+  var m = INTI.crearMotor({ semilla: 2024, config: { PROB_MULT: 1.0 } });
   for (var i = 0; i < 4000; i++) {
     var r = m.girar(10);
     if (r.pagoCascada > 0 && r.multTotal > 0) {
@@ -323,13 +322,27 @@ probar('con ganancia, el total = cascada × suma de orbes', function () {
   throw new Error('no se encontró ningún giro con premio y multiplicador');
 });
 
-probar('sin orbes, el total es igual a la cascada', function () {
-  var m = INTI.crearMotor({ semilla: 7, config: { PROB_ORBE: 0, PROB_ORBE_GRATIS: 0 } });
-  for (var i = 0; i < 500; i++) {
+probar('con PROB_MULT en 0, el total siempre es igual a la cascada', function () {
+  var m = INTI.crearMotor({ semilla: 7, config: { PROB_MULT: 0, PROB_MULT_GRATIS: 0 } });
+  for (var i = 0; i < 2000; i++) {
     var r = m.girar(10);
-    igual(r.multTotal, 0, 'no debería haber orbes');
+    igual(r.multTotal, 0, 'no debería haber multiplicador');
     igual(r.pagoTotal, r.pagoCascada, 'total = cascada');
   }
+});
+
+probar('en giros gratis el multiplicador es más probable', function () {
+  // Con la misma semilla, comparamos cuántas veces aparece el
+  // multiplicador en 3000 giros base vs 3000 "giros gratis".
+  var cfg = { PROB_MULT: 0.116, PROB_MULT_GRATIS: 0.30 };
+  var mBase = INTI.crearMotor({ semilla: 555, config: cfg });
+  var mGratis = INTI.crearMotor({ semilla: 555, config: cfg });
+  var conBase = 0, conGratis = 0, N = 3000;
+  for (var i = 0; i < N; i++) {
+    if (mBase.girar(10, { gratis: false }).multTotal > 0) conBase++;
+    if (mGratis.girar(10, { gratis: true }).multTotal > 0) conGratis++;
+  }
+  cierto(conGratis > conBase, 'en gratis (' + conGratis + ') debería salir más que en base (' + conBase + ')');
 });
 
 /* ============================================================

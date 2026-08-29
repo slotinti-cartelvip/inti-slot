@@ -86,12 +86,9 @@ body{
   pointer-events:none;
   z-index:-1;
 }
-.personaje img{
-  display:block;
-  width:min(30vw, 62vh);
-  max-width:430px;
-  height:auto;
-  filter:drop-shadow(-12px 14px 26px rgba(0,0,0,.65));
+/* El contenedor entero respira: mueve la imagen Y el halo juntos,
+   sea cual sea la capa visible en ese momento. */
+.personaje{
   animation:respirar 4.5s ease-in-out infinite;
   transform-origin:50% 100%;
 }
@@ -108,28 +105,48 @@ body{
   50%    {transform:translateY(-8px) scale(1.012)}
 }
 
-/* celebra al ganar */
-.personaje.celebra img{animation:celebrar .62s cubic-bezier(.34,1.56,.64,1) 2}
-@keyframes celebrar{
-  0%  {transform:translateY(0) rotate(0deg) scale(1)}
-  25% {transform:translateY(-26px) rotate(-3deg) scale(1.07)}
-  55% {transform:translateY(0) rotate(2deg) scale(.98)}
-  100%{transform:translateY(0) rotate(0deg) scale(1)}
+/* ---------- las tres capas del personaje ----------
+   Se superponen exactamente en el mismo lugar; solo una
+   tiene la clase .on a la vez. reposo y lanza son video
+   real (WebP animado); estatico es el respaldo. */
+.pj-capa{
+  display:block;
+  position:relative;
+  width:min(30vw, 62vh);
+  max-width:430px;
+  height:auto;
+  filter:drop-shadow(-12px 14px 26px rgba(0,0,0,.65));
+  opacity:0;
+  transition:opacity .18s ease-out;
 }
+.pj-capa.lanza,
+.pj-capa.estatico{ position:absolute; left:0; bottom:0; }
+.pj-capa.on{ opacity:1; }
+
+/* celebra: el halo se pone naranja mientras dura el gesto */
 .personaje.celebra .halo{
   background:radial-gradient(circle,rgba(255,122,24,.45) 0%,rgba(255,122,24,0) 66%);
 }
 
-/* LANZA: el gesto con que entrega un multiplicador */
-.personaje.lanza img{animation:lanzar .55s cubic-bezier(.36,1.4,.5,1)}
-@keyframes lanzar{
-  0%  {transform:translateY(0) rotate(0deg) scale(1)}
-  22% {transform:translateY(6px) rotate(4deg) scale(.96)}   /* toma impulso */
-  52% {transform:translateY(-16px) rotate(-7deg) scale(1.05)} /* lanza */
-  100%{transform:translateY(0) rotate(0deg) scale(1)}
+/* ---------- respaldo ----------
+   Solo entra en juego si el navegador no pudo reproducir el
+   WebP animado (el JS lo detecta y marca .sin-video). Ahí sí
+   se usa la animación por CSS sobre la imagen fija. */
+.personaje.sin-video .pj-capa.estatico{
+  animation:respirarImg 4.5s ease-in-out infinite;
 }
-.personaje.lanza .halo{
-  background:radial-gradient(circle,rgba(255,180,60,.55) 0%,rgba(255,150,40,0) 60%);
+@keyframes respirarImg{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%    {transform:translateY(-8px) scale(1.012)}
+}
+.personaje.sin-video.celebra .pj-capa.estatico{
+  animation:lanzarImg .55s cubic-bezier(.36,1.4,.5,1);
+}
+@keyframes lanzarImg{
+  0%  {transform:translateY(0) rotate(0deg) scale(1)}
+  22% {transform:translateY(6px) rotate(4deg) scale(.96)}
+  52% {transform:translateY(-16px) rotate(-7deg) scale(1.05)}
+  100%{transform:translateY(0) rotate(0deg) scale(1)}
 }
 
 @media (max-width:880px){
@@ -209,16 +226,6 @@ body{
 .cell.sale{animation:estallar .3s ease-in forwards}
 @keyframes estallar{to{transform:scale(.25) rotate(22deg);opacity:0}}
 
-.cell.orbe{
-  background:radial-gradient(circle at 35% 30%, #FFD27A 0%, var(--neon) 45%, #8E3200 100%);
-  box-shadow:0 0 18px rgba(255,122,24,.65), inset 0 -4px 10px rgba(0,0,0,.35);
-}
-.cell.orbe .val{
-  font-family:'Bungee',cursive;
-  font-size:clamp(11px,2.9vw,17px);
-  color:#2B1200;
-  text-shadow:0 1px 0 rgba(255,255,255,.4);
-}
 .cell.scatter{
   background:rgba(232,184,75,.14);
   box-shadow:inset 0 0 0 2px rgba(232,184,75,.5);
@@ -517,6 +524,13 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
   color:rgba(244,235,214,.34);text-align:center;
 }
 .acciones{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.acciones .enlace-panel{
+  background:transparent;border:1px solid var(--acero);
+  color:rgba(244,235,214,.6);border-radius:18px;
+  padding:7px 16px;font-family:inherit;font-size:14px;
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.acciones .enlace-panel:hover{border-color:var(--oro);color:var(--oro)}
 .acciones button{
   background:transparent;border:1px solid var(--acero);
   color:rgba(244,235,214,.6);border-radius:18px;

@@ -77,7 +77,13 @@
 
   <div class="personaje" id="personaje" aria-hidden="true">
     <div class="halo"></div>
-    <img src="img/ekeko-personaje.png" alt="" draggable="false">
+    <!-- Tres capas superpuestas, una visible a la vez:
+         reposo (en loop) y lanza (una vez, al ganar multiplicador)
+         son video real; estatico es el respaldo si el navegador
+         no puede reproducir WebP animado. -->
+    <img class="pj-capa reposo on" id="pjReposo" src="img/ekeko-reposo.webp" alt="" draggable="false">
+    <img class="pj-capa lanza"     id="pjLanza"  src="img/ekeko-lanza.webp"  alt="" draggable="false">
+    <img class="pj-capa estatico"  id="pjEstatico" src="img/ekeko-personaje.png" alt="" draggable="false" hidden>
   </div>
 
 </div>
@@ -100,22 +106,23 @@
         <li>No hay l&iacute;neas de pago. Cuenta la <b>cantidad total</b> del mismo s&iacute;mbolo en pantalla, caiga donde caiga.</li>
         <li>Con <b>8 iguales o m&aacute;s</b> pagas. Cuantos m&aacute;s salgan, mayor el multiplicador.</li>
         <li>Los s&iacute;mbolos que pagan desaparecen y caen otros encima. Cada ca&iacute;da encadenada sube el <b>combo</b>.</li>
-        <li>Los <b>orbes naranjas</b> suman su valor entre s&iacute; y multiplican todo lo ganado en esa secuencia.</li>
-        <li>Con <b>4 Ekekos o m&aacute;s</b> se activan 10 giros gratis.</li>
+        <li>Si tu jugada gana, el <b>Ekeko</b> a veces aparece y multiplica todo lo ganado en esa secuencia &mdash; no pasa siempre, por eso vale la pena cuando sucede.</li>
+        <li>Con <b>4 &iacute;dolos o m&aacute;s</b> se activan 10 giros gratis.</li>
         <li>Toca el tablero para saltar la animaci&oacute;n. El resultado no cambia.</li>
       </ul>
 
       <h3>Datos del juego</h3>
       <div class="fichas">
-        <div class="ficha"><span>RTP</span><b>96,09%</b></div>
+        <div class="ficha"><span>RTP</span><b id="fichaRtp">96,00%</b></div>
         <div class="ficha"><span>Volatilidad</span><b>Alta</b></div>
         <div class="ficha"><span>Cuadr&iacute;cula</span><b>6&times;4</b></div>
-        <div class="ficha"><span>Premio m&aacute;ximo</span><b>7.400&times;</b></div>
+        <div class="ficha"><span>Premio m&aacute;ximo</span><b>5.000&times;+</b></div>
       </div>
 
       <p class="aviso">Demo t&eacute;cnica. Los cr&eacute;ditos no tienen valor y no se juega dinero real.</p>
 
       <div class="acciones">
+        <a class="enlace-panel" href="panel.html">Panel de operador</a>
         <button id="recharge">Recargar cr&eacute;ditos</button>
         <button id="soundToggle">Sonido: activado</button>
       </div>
@@ -124,6 +131,7 @@
 </div>
 
 <script src="engine.js"></script>
+<script src="perfiles.js"></script>
 <script src="symbols.js"></script>
 <script src="ui.js"></script>
 </body>

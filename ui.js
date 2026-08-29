@@ -24,7 +24,12 @@
     entreGirosGratis: 1200
   };
 
-  var motor = INTI.crearMotor();          // sin semilla = aleatorio real
+  /* El perfil de RTP lo define el panel de operador (perfiles.js).
+     Se lee UNA vez al cargar: cambiar de perfil a mitad de partida
+     no se hace, hay que recargar. */
+  var CONF = window.INTI_CONFIG;
+  var perfil = CONF.perfilActivo();
+  var motor = INTI.crearMotor({ config: CONF.configDe(perfil) });
   var arte = window.SIMBOLOS_ARTE;
 
   var creditos = CREDITOS_INICIALES;
@@ -78,9 +83,6 @@
 
         if (cel.t === 'sim') {
           dentro = arte.dibujar(motor.porId[cel.id]);
-        } else if (cel.t === 'orbe') {
-          clases += ' orbe';
-          dentro = '<span class="val">' + cel.v + 'x</span>';
         } else {
           clases += ' scatter';
           dentro = arte.SCATTER;
@@ -215,29 +217,70 @@
      El dia que lo cambies por una animacion Lottie, este es el
      unico lugar del codigo que hay que tocar.
      ============================================================ */
+  /* ============================================================
+     VIDEO DEL EKEKO
+     ------------------------------------------------------------
+     "reposo" y "lanza" son WebP animado (video real, no CSS).
+     Solo una capa tiene la clase .on a la vez.
+
+     Un <img> con WebP animado no avisa por evento cuándo empieza
+     o termina su ciclo — por eso la duración va escrita a mano
+     abajo (se midió al exportar el archivo). Si algún día cambias
+     el video, cambia también el número.
+
+     Si el navegador no logra decodificar el WebP (el evento
+     'error' del <img> lo delata), se cae al respaldo: la imagen
+     fija con las animaciones de CSS que ya existían.
+     ============================================================ */
+  var DURACION_LANZA_MS = 3800;   // 38 cuadros a 10 fps
+  var videoDisponible = true;
+  var lanzando = false;
+
+  var pjReposo   = $('pjReposo');
+  var pjLanza    = $('pjLanza');
+  var pjEstatico = $('pjEstatico');
+
+  function activarRespaldo() {
+    if (!videoDisponible) return;   // ya estaba activo
+    videoDisponible = false;
+    $('personaje').classList.add('sin-video');
+    if (pjReposo) pjReposo.hidden = true;
+    if (pjLanza) pjLanza.hidden = true;
+    if (pjEstatico) { pjEstatico.hidden = false; pjEstatico.classList.add('on'); }
+  }
+  if (pjReposo) pjReposo.addEventListener('error', activarRespaldo);
+  if (pjLanza) pjLanza.addEventListener('error', activarRespaldo);
+
   function ekekoLanza() {
     var p = $('personaje');
-    if (!p) return;
-    p.classList.remove('lanza');
-    void p.offsetWidth;
-    p.classList.add('lanza');
-    setTimeout(function () { p.classList.remove('lanza'); }, 600);
+    if (!p || lanzando) return;
+
     tono(760, 0.09, 0.05);
     setTimeout(function () { tono(1040, 0.11, 0.045); }, 90);
-  }
 
-  /* Cuenta cuántos orbes hay entre las celdas indicadas.
-     Si aparece alguno, el Ekeko hace el gesto de entregarlo. */
-  function avisarOrbes(grid, posiciones) {
-    if (!posiciones || !posiciones.length) return 0;
-    var n = 0;
-    for (var i = 0; i < posiciones.length; i++) {
-      var p = posiciones[i].split('-');
-      var cel = grid[+p[0]][+p[1]];
-      if (cel && cel.t === 'orbe') n++;
+    if (!videoDisponible) {
+      // respaldo: el gesto lo hace el CSS sobre la imagen fija
+      p.classList.remove('celebra');
+      void p.offsetWidth;
+      p.classList.add('celebra');
+      setTimeout(function () { p.classList.remove('celebra'); }, 700);
+      return;
     }
-    if (n > 0) ekekoLanza();
-    return n;
+
+    lanzando = true;
+    p.classList.add('celebra');
+    pjReposo.classList.remove('on');
+    // cambiar el src reinicia la animación desde el primer cuadro,
+    // incluso si el navegador ya la tenía en caché
+    pjLanza.src = 'img/ekeko-lanza.webp?r=' + Date.now();
+    pjLanza.classList.add('on');
+
+    setTimeout(function () {
+      pjLanza.classList.remove('on');
+      pjReposo.classList.add('on');
+      p.classList.remove('celebra');
+      lanzando = false;
+    }, DURACION_LANZA_MS);
   }
 
   function ekekoCelebra() {
@@ -255,7 +298,6 @@
   async function reproducir(resultado) {
     pintar(resultado.gridInicial, todasLasPosiciones());
     tono(180, 0.06, 0.04);
-    avisarOrbes(resultado.gridInicial, todasLasPosiciones());
     if (resultado.pasos.length > 0) mostrarAviso();
     await espera(TIEMPOS.caidaInicial);
 
@@ -279,7 +321,6 @@
       if (saltar) break;
 
       pintar(paso.gridDespues, paso.nuevas);
-      avisarOrbes(paso.gridDespues, paso.nuevas);
       await espera(TIEMPOS.caidaCascada);
     }
 
@@ -304,8 +345,9 @@
       });
       barrerLuz();
       fanfarria(resultado.multTotal);
-      ekekoCelebra();
-      await espera(TIEMPOS.revelarMultiplicador);
+      ekekoLanza();
+      // el gesto dura más que el respiro anterior: le damos su tiempo
+      await espera(Math.max(TIEMPOS.revelarMultiplicador, DURACION_LANZA_MS));
     }
   }
 
@@ -379,6 +421,10 @@
       fanfarria(100);
       ekekoCelebra();
     }
+
+    /* Registro para el panel: la apuesta solo cuenta en el giro
+       base; los giros gratis suman pago pero no apuesta. */
+    CONF.registrarGiro(esGratis ? 0 : apuesta, resultado.pagoTotal, perfil.id);
 
     ocupado = false;
     saltar = false;
@@ -478,7 +524,11 @@
   });
 
   /* ---------- panel de información ---------- */
-  function abrirInfo() { $('modal').hidden = false; }
+  function abrirInfo() {
+    var f = document.getElementById('fichaRtp');
+    if (f) f.textContent = perfil.rtpDeclarado.toFixed(2).replace('.', ',') + '%';
+    $('modal').hidden = false;
+  }
   function cerrarInfo() { $('modal').hidden = true; }
 
   $('infoBtn').addEventListener('click', abrirInfo);
