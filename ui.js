@@ -39,11 +39,13 @@
     entreGirosGratis: 1200,
     entreAutomaticos: 550,
 
-    /* --- coreografía del multiplicador --- */
-    antesDelOrbe: 700,        // el Ekeko toma impulso antes de que baje
-    rayoAntesDelOrbe: 260,    // la luz baja primero, el orbe después
-    orbeAntesDelConteo: 620,  // el orbe se deja ver antes de que trepe el número
-    despuesDelConteo: 500     // aire al final para leer el total
+    /* --- coreografía del multiplicador ---
+       El Ekeko recién levanta los billetes con las dos manos a
+       los 2,5 s del video. Antes de eso todavía está sacándolos
+       de la bolsa, así que el orbe no puede salir antes. */
+    antesDelOrbe: 2500,       // hasta que termina de lanzar
+    orbeAntesDelTotal: 620,   // el orbe se deja ver antes del resultado
+    despuesDelConteo: 900     // aire al final para leer el total
   };
 
   // el RITMO escala todos los tiempos de una sola vez
@@ -97,7 +99,6 @@
   function pedirSalto() {
     if (!ocupado || saltar) return;
     saltar = true;
-    ocultarAviso();
     if (cancelarEsperaActual) cancelarEsperaActual();
   }
 
@@ -148,8 +149,6 @@
     }
   }
 
-  function mostrarAviso() { $('skiphint').classList.add('on'); }
-  function ocultarAviso() { $('skiphint').classList.remove('on'); }
 
 
 
@@ -268,7 +267,6 @@
   async function reproducir(resultado) {
     pintar(resultado.gridInicial, todasLasPosiciones());
     tono(180, 0.06, 0.04);
-    if (resultado.pasos.length > 0) mostrarAviso();
     await espera(TIEMPOS.caidaInicial);
 
     var acumulado = 0;
@@ -281,7 +279,7 @@
       pintar(paso.gridAntes, null);
       resaltar(paso.gridAntes, paso.ganadores);
       // el monto aparece directo, sin contador ni cartel
-      $('gain').textContent = INTI.redondear(acumulado);
+      mostrarGanancia(acumulado);
       tono(520 + i * 70, 0.12, 0.05);
       await espera(TIEMPOS.resaltarGanadores);
       if (saltar) break;
@@ -295,13 +293,11 @@
       await espera(TIEMPOS.caidaCascada);
     }
 
-    ocultarAviso();
-
     // Si se saltó, mostramos directamente el estado final
     if (saltar) {
       pintar(resultado.gridFinal, null);
       if (resultado.pasos.length > 0) {
-        $('gain').textContent = INTI.redondear(resultado.pagoCascada);
+        mostrarGanancia(resultado.pagoCascada);
       }
       return;
     }
@@ -327,60 +323,30 @@
      ============================================================ */
   async function revelarMultiplicador(resultado) {
     var total = INTI.redondear(resultado.pagoCascada * resultado.multTotal);
+    var cartel = $('multCartel');
 
-    // 1. el gesto
+    // 1. el gesto completo: hasta que levanta los billetes
     ekekoLanza();
-    $('gain').textContent = INTI.redondear(resultado.pagoCascada);
     await espera(TIEMPOS.antesDelOrbe);
 
-    // 2 y 3. la luz y el orbe sobre una casilla al azar
-    var celda = celdaAlAzar();
-    if (celda) {
-      lanzarRayo(celda);
-      await espera(TIEMPOS.rayoAntesDelOrbe);
-      var orbe = ponerOrbe(celda, resultado.multTotal);
-      tono(880, 0.12, 0.06);
-      await espera(TIEMPOS.orbeAntesDelConteo);
-      if (orbe) orbe.classList.add('espera');
-    }
+    // 2. el cartel entra con el orbe, todavía sin resultado
+    $('multBase').textContent = INTI.redondear(resultado.pagoCascada);
+    $('multOrbe').textContent = resultado.multTotal + 'x';
+    $('multRes').textContent = INTI.redondear(total);
+    $('multRes').classList.remove('aparece');
+    cartel.className = 'mult-cartel parcial on';
+    tono(880, 0.12, 0.06);
+    await espera(TIEMPOS.orbeAntesDelTotal);
 
-    // 4. RECIÉN AHÍ se aplica el multiplicador: el monto salta al total
+    // 3. se revela el total
+    cartel.className = 'mult-cartel on';
+    void $('multRes').offsetWidth;
+    $('multRes').classList.add('aparece');
     barrerLuz();
     fanfarria(resultado.multTotal);
-    $('gain').textContent = INTI.redondear(total);
-    mensaje('Multiplicador ×' + resultado.multTotal, 'win');
+    mostrarGanancia(total);
 
     await espera(TIEMPOS.despuesDelConteo);
-  }
-
-  /* Elige una casilla del tablero para que caiga el orbe.
-     Evita las dos columnas del borde para que no quede cortado. */
-  function celdaAlAzar() {
-    var c = 1 + Math.floor(Math.random() * (motor.cfg.COLS - 2));
-    var r = Math.floor(Math.random() * motor.cfg.ROWS);
-    return document.querySelector('[data-pos="' + c + '-' + r + '"]');
-  }
-
-  function lanzarRayo(celda) {
-    var g = $('grid');
-    if (!g) return;
-    var rayo = document.createElement('div');
-    rayo.className = 'rayo-mult';
-    var caja = celda.getBoundingClientRect();
-    var cajaG = g.getBoundingClientRect();
-    rayo.style.left = (caja.left - cajaG.left + caja.width * 0.37) + 'px';
-    rayo.style.width = (caja.width * 0.26) + 'px';
-    g.appendChild(rayo);
-    setTimeout(function () { rayo.remove(); }, 600);
-  }
-
-  function ponerOrbe(celda, valor) {
-    var o = document.createElement('div');
-    o.className = 'orbe-mult';
-    o.innerHTML = '<span>' + valor + 'x</span>';
-    celda.appendChild(o);
-    chispear(celda, 8);
-    return o;
   }
 
   /* ============================================================
@@ -399,8 +365,9 @@
 
     ocupado = true;
     saltar = false;
+    $('multCartel').className = 'mult-cartel';
     bloquear(true);
-    $('gain').textContent = '0';
+    mostrarGanancia(0);
 
     if (!esGratis) {
       creditos -= apuesta;
@@ -419,7 +386,7 @@
          el jugador ve el número final de una vez. */
       creditos += resultado.pagoTotal;
       $('credits').textContent = INTI.redondear(creditos);
-      $('gain').textContent = INTI.redondear(resultado.pagoTotal);
+      mostrarGanancia(resultado.pagoTotal);
 
       if (veces >= 20) barrerLuz();
       if (!esGratis) fanfarria(veces);
@@ -491,6 +458,19 @@
   /* ============================================================
      PANTALLA
      ============================================================ */
+  /* La ganancia solo se ve cuando hay algo ganado. En cero
+     el bloque queda vacío en vez de mostrar un 0 muerto. */
+  function mostrarGanancia(monto) {
+    var caja = $('gain').parentElement;
+    if (monto > 0) {
+      $('gain').textContent = INTI.redondear(monto);
+      caja.classList.remove('vacia');
+    } else {
+      $('gain').textContent = '';
+      caja.classList.add('vacia');
+    }
+  }
+
   function mensaje(txt, cls) {
     var m = $('message');
     m.textContent = txt;
