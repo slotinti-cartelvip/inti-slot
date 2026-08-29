@@ -321,6 +321,24 @@
      Ese respiro entre el gesto y el número es lo que hace que
      se sienta un premio y no un dato que cambió en pantalla.
      ============================================================ */
+  /* El orbe cae sobre una casilla del tablero, además de verse
+     en el cartel de arriba. Evita las columnas del borde para
+     que no quede cortado. */
+  function ponerOrbeEnCasilla(valor) {
+    var c = 1 + Math.floor(Math.random() * (motor.cfg.COLS - 2));
+    var r = Math.floor(Math.random() * motor.cfg.ROWS);
+    var celda = document.querySelector('[data-pos="' + c + '-' + r + '"]');
+    if (!celda) return null;
+
+    var o = document.createElement('div');
+    o.className = 'orbe-casilla';
+    o.innerHTML = '<span>' + valor + 'x</span>';
+    celda.appendChild(o);
+    chispear(celda, 8);
+    setTimeout(function () { o.classList.add('late'); }, 520);
+    return o;
+  }
+
   async function revelarMultiplicador(resultado) {
     var total = INTI.redondear(resultado.pagoCascada * resultado.multTotal);
     var cartel = $('multCartel');
@@ -329,7 +347,8 @@
     ekekoLanza();
     await espera(TIEMPOS.antesDelOrbe);
 
-    // 2. el cartel entra con el orbe, todavía sin resultado
+    // 2. el orbe cae sobre una casilla Y aparece el cartel arriba
+    ponerOrbeEnCasilla(resultado.multTotal);
     $('multBase').textContent = INTI.redondear(resultado.pagoCascada);
     $('multOrbe').textContent = resultado.multTotal + 'x';
     $('multRes').textContent = INTI.redondear(total);

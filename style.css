@@ -72,10 +72,11 @@ body{
 }
 .escena .cabinet{
   flex:0 1 auto;
-  /* el ancho lo manda la ALTURA disponible, para que el
-     tablero crezca sin desbordar la pantalla */
-  width:min(78vw, 132vh);
-  max-width:900px;
+  /* El ancho lo manda la ALTURA disponible. Calibrado para que
+     el conjunto entero (marquesina + tablero + barra) entre en
+     la ventana sin scroll, igual que en la referencia. */
+  width:min(74vw, 112vh);
+  max-width:860px;
 }
 
 /* El contenedor entero respira: mueve la imagen Y el halo juntos,
@@ -259,7 +260,10 @@ body{
 .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 
 .cell{
-  aspect-ratio:1;
+  /* Ligeramente más anchas que altas, como la referencia
+     comercial. Con 6x4 esto baja la altura del tablero un 12%
+     sin achicar los símbolos, y hace que todo entre sin scroll. */
+  aspect-ratio:1.12;
   border-radius:9px;
   background:rgba(255,255,255,.035);
   display:flex;align-items:center;justify-content:center;
@@ -470,6 +474,126 @@ body{
 @media (prefers-reduced-motion:reduce){
   .mult-cartel .orbe,.mult-cartel .res.aparece{animation-duration:.01s}
 }
+
+
+/* ---------- el orbe también cae sobre una casilla ---------- */
+.orbe-casilla{
+  position:absolute;
+  left:50%;top:50%;
+  width:76%;aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  z-index:6;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 34% 28%, #FFE9A8 0%, #FFB33C 38%, var(--neon) 62%, #8E3200 100%);
+  box-shadow:
+    0 0 0 3px rgba(255,233,168,.55),
+    0 0 26px rgba(255,150,40,.85),
+    inset 0 -5px 12px rgba(0,0,0,.4);
+  animation:orbeCaeCasilla .5s cubic-bezier(.3,1.5,.5,1) both;
+}
+.orbe-casilla span{
+  font-family:'Bungee',cursive;
+  font-size:clamp(12px,3.1vw,20px);
+  color:#3A1A00;
+  text-shadow:0 1px 0 rgba(255,255,255,.5);
+}
+@keyframes orbeCaeCasilla{
+  0%  {transform:translate(-50%,-210%) scale(.35);opacity:0}
+  55% {opacity:1}
+  72% {transform:translate(-50%,-50%) scale(1.2)}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+}
+.orbe-casilla.late{animation:orbeLatir 1.1s ease-in-out infinite}
+@keyframes orbeLatir{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%    {transform:translate(-50%,-50%) scale(1.09)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .orbe-casilla{animation-duration:.01s}
+  .orbe-casilla.late{animation:none}
+}
+
+/* ============================================================
+   BARRA DE MANDO
+   Crédito a la izquierda, giro al centro, apuesta a la derecha.
+   ============================================================ */
+.barra{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:12px;
+  margin-top:14px;
+}
+
+.lado{display:flex;align-items:center;gap:14px}
+.lado.izq{justify-content:flex-start}
+.lado.der{justify-content:flex-end;gap:9px}
+
+.dato{display:flex;flex-direction:column;line-height:1.15}
+.et{
+  font-size:9px;letter-spacing:.24em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.42);
+}
+.nu{
+  font-family:'Share Tech Mono',monospace;
+  font-size:clamp(17px,2.4vw,24px);
+  color:var(--oro);
+}
+.dato.gan .nu{color:var(--neon)}
+
+/* la ganancia se atenúa cuando no hay nada ganado */
+.dato.gan.vacia .et{opacity:.35}
+.dato.gan.vacia .nu::after{content:"—";color:rgba(244,235,214,.25)}
+
+/* botón circular de giro */
+.girar{
+  position:relative;
+  width:clamp(66px,8.4vw,92px);
+  height:clamp(66px,8.4vw,92px);
+  border-radius:50%;border:0;cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 28%, #FFB86B 0%, var(--neon) 46%, #C25400 100%);
+  color:#3A1A00;
+  box-shadow:
+    0 0 0 4px rgba(232,184,75,.22),
+    0 7px 0 #8A3D00,
+    0 14px 26px rgba(255,122,24,.30);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .08s, box-shadow .08s, filter .2s;
+}
+.girar svg{width:52%;height:52%;transition:transform .5s}
+.girar:hover:not(:disabled) svg{transform:rotate(60deg)}
+.girar:active:not(:disabled){transform:translateY(6px);box-shadow:0 1px 0 #8A3D00}
+.girar:disabled{filter:saturate(.5) brightness(.75);cursor:not-allowed}
+.girar .etiq{
+  position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;
+  color:rgba(244,235,214,.55);white-space:nowrap;
+}
+.girar.gratis{
+  background:radial-gradient(circle at 34% 28%, #FFE9A8 0%, var(--oro) 46%, #9A7412 100%);
+  box-shadow:0 0 0 4px rgba(255,122,24,.3), 0 7px 0 #6E5209, 0 14px 30px rgba(232,184,75,.4);
+}
+
+button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
+
+/* botón de información en la marquesina */
+.info-btn{
+  position:absolute;top:2px;right:0;
+  width:28px;height:28px;border-radius:50%;
+  background:transparent;border:1px solid var(--acero);
+  color:rgba(244,235,214,.55);
+  font-family:'Bungee',cursive;font-size:13px;cursor:pointer;
+  transition:border-color .2s,color .2s;
+}
+.info-btn:hover{border-color:var(--neon);color:var(--neon)}
+
+/* ---------- mensajes ---------- */
+.message{margin-top:22px;min-height:20px;text-align:center;font-size:15px;color:rgba(244,235,214,.6)}
+.message.win{color:var(--neon);font-weight:700}
+.message.free{color:var(--oro);font-weight:700}
 
 /* ============================================================
    FICHAS DE LA BARRA (apuesta y automático)
