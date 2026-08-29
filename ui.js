@@ -36,7 +36,6 @@
     resaltarGanadores: 980,   // el jugador tiene que alcanzar a leer qué ganó
     estallido: 330,
     caidaCascada: 300,
-    mostrarTotal: 900,
     entreGirosGratis: 1200,
     entreAutomaticos: 550,
 
@@ -149,74 +148,10 @@
     }
   }
 
-  /* ============================================================
-     CONTADOR DE COMBO
-     Se muestra arriba del tablero y sube con cada cascada.
-     El nivel cambia el color y el tamaño para que se sienta
-     que la cadena está creciendo.
-     ============================================================ */
-  function mostrarCombo(nivel, acumulado) {
-    var el = $('combo');
-    $('comboX').textContent = '×' + nivel;
-    $('comboMonto').textContent = '+' + INTI.redondear(acumulado);
-
-    el.className = 'combo on nivel' + Math.min(nivel, 5);
-    // reinicia la animación de latido
-    void el.offsetWidth;
-    el.classList.add('late');
-  }
-
-  function ocultarCombo() { $('combo').className = 'combo'; }
-
-  /* ============================================================
-     TOTAL DE LA JUGADA
-     ============================================================ */
-  function mostrarTotal(texto, monto, grande) {
-    $('totalCap').textContent = texto;
-    $('totalNum').textContent = INTI.redondear(monto);
-    $('total').className = 'total on' + (grande ? ' grande' : '');
-  }
-
-  function ocultarTotal() { $('total').className = 'total'; }
-
   function mostrarAviso() { $('skiphint').classList.add('on'); }
   function ocultarAviso() { $('skiphint').classList.remove('on'); }
 
 
-
-  /* ============================================================
-     NÚMEROS QUE SUBEN
-     ------------------------------------------------------------
-     El monto no aparece de golpe: trepa. Esa media pausa
-     mientras el número corre es lo que hace que un premio se
-     sienta premio y no un dato.
-     La duración crece con el tamaño del premio, con tope, para
-     que un premio grande se saboree y uno chico no aburra.
-     ============================================================ */
-  function animarNumero(el, desde, hasta, ms, alTerminar) {
-    var t0 = null;
-    var salto = hasta - desde;
-
-    function paso(t) {
-      if (t0 === null) t0 = t;
-      var p = Math.min(1, (t - t0) / ms);
-      var suave = 1 - Math.pow(1 - p, 3);        // frena al final
-      el.textContent = INTI.redondear(desde + salto * suave);
-      if (p < 1) requestAnimationFrame(paso);
-      else {
-        el.textContent = INTI.redondear(hasta);
-        if (alTerminar) alTerminar();
-      }
-    }
-    requestAnimationFrame(paso);
-  }
-
-  function duracionConteo(veces) {
-    if (veces >= 50) return 2200;
-    if (veces >= 20) return 1500;
-    if (veces >= 5)  return 950;
-    return 550;
-  }
 
   /* ============================================================
      CHISPAS
@@ -345,7 +280,8 @@
 
       pintar(paso.gridAntes, null);
       resaltar(paso.gridAntes, paso.ganadores);
-      mostrarCombo(i + 1, acumulado);
+      // el monto aparece directo, sin contador ni cartel
+      $('gain').textContent = INTI.redondear(acumulado);
       tono(520 + i * 70, 0.12, 0.05);
       await espera(TIEMPOS.resaltarGanadores);
       if (saltar) break;
@@ -365,7 +301,7 @@
     if (saltar) {
       pintar(resultado.gridFinal, null);
       if (resultado.pasos.length > 0) {
-        mostrarCombo(resultado.pasos.length, resultado.pagoCascada);
+        $('gain').textContent = INTI.redondear(resultado.pagoCascada);
       }
       return;
     }
@@ -394,7 +330,7 @@
 
     // 1. el gesto
     ekekoLanza();
-    mostrarTotal('Ganancia', resultado.pagoCascada, false);
+    $('gain').textContent = INTI.redondear(resultado.pagoCascada);
     await espera(TIEMPOS.antesDelOrbe);
 
     // 2 y 3. la luz y el orbe sobre una casilla al azar
@@ -408,17 +344,13 @@
       if (orbe) orbe.classList.add('espera');
     }
 
-    // 4. el premio trepa
-    mostrarTotal('Multiplicador ×' + resultado.multTotal, resultado.pagoCascada, true);
-    $('totalNum').classList.add('contando');
+    // 4. RECIÉN AHÍ se aplica el multiplicador: el monto salta al total
     barrerLuz();
     fanfarria(resultado.multTotal);
-    animarNumero($('totalNum'), resultado.pagoCascada, total,
-                 duracionConteo(resultado.multTotal), function () {
-      $('totalNum').classList.remove('contando');
-    });
+    $('gain').textContent = INTI.redondear(total);
+    mensaje('Multiplicador ×' + resultado.multTotal, 'win');
 
-    await espera(duracionConteo(resultado.multTotal) + TIEMPOS.despuesDelConteo);
+    await espera(TIEMPOS.despuesDelConteo);
   }
 
   /* Elige una casilla del tablero para que caiga el orbe.
@@ -468,8 +400,6 @@
     ocupado = true;
     saltar = false;
     bloquear(true);
-    ocultarCombo();
-    ocultarTotal();
     $('gain').textContent = '0';
 
     if (!esGratis) {
@@ -484,24 +414,20 @@
 
     if (resultado.pagoTotal > 0) {
       var veces = resultado.pagoTotal / apuesta;
-      var dur = duracionConteo(veces);
-      var creditosAntes = creditos;
-      creditos += resultado.pagoTotal;
 
-      mostrarTotal(esGratis ? 'Giro gratis' : 'Ganancia', 0, veces >= 20);
-      $('totalNum').classList.add('contando');
-      animarNumero($('totalNum'), 0, resultado.pagoTotal, dur, function () {
-        $('totalNum').classList.remove('contando');
-      });
-      animarNumero($('gain'), 0, resultado.pagoTotal, dur);
-      animarNumero($('credits'), creditosAntes, creditos, dur);
+      /* Los créditos se cargan directo, sin contador ni cartel:
+         el jugador ve el número final de una vez. */
+      creditos += resultado.pagoTotal;
+      $('credits').textContent = INTI.redondear(creditos);
+      $('gain').textContent = INTI.redondear(resultado.pagoTotal);
 
       if (veces >= 20) barrerLuz();
       if (!esGratis) fanfarria(veces);
-      if (resultado.multTotal === 0) ekekoCelebra();
-      mensaje('', '');
+      if (resultado.multTotal === 0) {
+        ekekoCelebra();
+        mensaje('', '');
+      }
     } else {
-      ocultarCombo();
       mensaje('Sin combinación. Otra vez.', '');
     }
 

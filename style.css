@@ -167,13 +167,19 @@ body{
    justo lo que falta.
    ============================================================ */
 @media (max-width:880px){
-  body{overflow-y:auto;overflow-x:hidden;height:auto;min-height:100vh}
+  body{
+    overflow-y:auto;overflow-x:hidden;
+    height:auto;min-height:100vh;
+    justify-content:flex-start;   /* pegado arriba, no centrado */
+    padding:6px 8px 24px;
+  }
 
   .escena{
     position:relative;
     height:auto;
     flex-direction:column;
-    padding-top:4vh;          /* aire para que el Ekeko asome */
+    /* espacio reservado para que el Ekeko se vea entero arriba */
+    padding-top:min(23vh, 190px);
   }
   .escena .cabinet{width:100%;max-width:560px}
 
@@ -181,15 +187,19 @@ body{
     display:flex;
     position:absolute;
     top:0;
-    right:-13vw;
+    right:-6vw;
     margin-left:0;
     z-index:-1;               /* detrás del gabinete */
   }
   .pj-capa{
-    height:min(30vh, 260px);
+    height:min(31vh, 270px);
     max-width:none;
   }
   .personaje .halo{width:150%;padding-bottom:150%}
+
+  /* la marquesina ocupa menos para ganar altura */
+  .marquee{padding:2px 0 8px}
+  .marquee .sub{display:none}
 }
 
 /* ============================================================
@@ -392,73 +402,6 @@ body{
   .orbe-mult,.rayo-mult{animation-duration:.01s}
   .orbe-mult.espera{animation:none}
 }
-
-/* ---------- contador de combo ---------- */
-.combo{
-  position:absolute;top:10px;left:50%;
-  transform:translateX(-50%) translateY(-140%);
-  z-index:6;opacity:0;pointer-events:none;
-  display:flex;align-items:center;gap:8px;
-  padding:6px 16px;border-radius:999px;
-  background:rgba(21,15,8,.92);
-  border:1px solid var(--acero);
-  box-shadow:0 6px 20px rgba(0,0,0,.5);
-  transition:transform .22s cubic-bezier(.34,1.5,.64,1), opacity .22s;
-  white-space:nowrap;
-}
-.combo.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.combo .lbl{
-  font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;
-  color:rgba(244,235,214,.5);
-}
-.combo .x{font-family:'Bungee',cursive;font-size:17px;color:var(--oro);line-height:1}
-.combo .monto{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--crema)}
-
-/* el color y el brillo suben con el largo de la cadena */
-.combo.nivel2{border-color:rgba(232,184,75,.55)}
-.combo.nivel3{border-color:var(--oro);box-shadow:0 0 18px rgba(232,184,75,.35)}
-.combo.nivel4{border-color:var(--neon);box-shadow:0 0 22px rgba(255,122,24,.45)}
-.combo.nivel4 .x{color:var(--neon)}
-.combo.nivel5{
-  border-color:var(--neon);
-  background:rgba(255,122,24,.18);
-  box-shadow:0 0 30px rgba(255,122,24,.6);
-}
-.combo.nivel5 .x{color:#fff;text-shadow:0 0 12px var(--neon)}
-
-.combo.late{animation:comboLate .3s cubic-bezier(.34,1.6,.64,1)}
-@keyframes comboLate{
-  0%{transform:translateX(-50%) scale(1)}
-  45%{transform:translateX(-50%) scale(1.18)}
-  100%{transform:translateX(-50%) scale(1)}
-}
-
-/* ---------- total de la jugada ---------- */
-.total{
-  position:absolute;left:0;right:0;bottom:8px;
-  z-index:6;opacity:0;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;
-  transform:translateY(14px);
-  transition:opacity .25s, transform .25s;
-}
-.total.on{opacity:1;transform:translateY(0)}
-.total .cap{
-  font-size:10px;letter-spacing:.28em;text-transform:uppercase;font-weight:600;
-  color:var(--oro);
-  text-shadow:0 2px 6px rgba(0,0,0,.9);
-}
-.total .num{
-  font-family:'Bungee',cursive;
-  font-size:clamp(26px,7.5vw,42px);
-  color:var(--crema);line-height:1.1;
-  text-shadow:0 0 18px rgba(255,122,24,.65), 0 3px 10px rgba(0,0,0,.95);
-}
-.total.grande .num{
-  color:var(--neon);
-  font-size:clamp(32px,10vw,56px);
-  animation:totalPum .45s cubic-bezier(.34,1.6,.64,1);
-}
-@keyframes totalPum{0%{transform:scale(.55);opacity:0}100%{transform:scale(1);opacity:1}}
 
 /* ---------- aviso de salto ---------- */
 .skiphint{
@@ -756,7 +699,7 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 .acciones button:hover{border-color:var(--neon);color:var(--neon)}
 
 @media (prefers-reduced-motion:reduce){
-  .cell.nuevo,.cell.gana,.cell.sale,.combo.late,.total.grande .num{animation-duration:.01s}
+  .cell.nuevo,.cell.gana,.cell.sale{animation-duration:.01s}
   .personaje img{animation:none}
   .modal,.hoja{animation:none}
   .personaje.celebra img{animation-duration:.01s}
