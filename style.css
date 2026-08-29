@@ -559,6 +559,105 @@ button:focus-visible{outline:3px solid var(--oro);outline-offset:3px}
 .message.win{color:var(--neon);font-weight:700}
 .message.free{color:var(--oro);font-weight:700}
 
+
+/* ============================================================
+   FICHAS DE LA BARRA (apuesta y automático)
+   ============================================================ */
+.chip{
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:var(--panel);border:1px solid var(--acero);
+  border-radius:11px;padding:6px 13px;cursor:pointer;
+  font-family:inherit;color:inherit;line-height:1.15;
+  transition:border-color .2s,background .2s;
+}
+.chip:hover:not(:disabled){border-color:var(--neon)}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.chip .nu{font-size:clamp(15px,2.1vw,20px)}
+.chip.auto .nu{color:rgba(244,235,214,.55);font-size:clamp(12px,1.7vw,15px)}
+.chip.auto.on{border-color:var(--neon);background:rgba(255,122,24,.14)}
+.chip.auto.on .nu{color:var(--neon)}
+
+/* aviso de giros automáticos restantes */
+.auto-aviso{
+  position:absolute;bottom:8px;left:50%;
+  transform:translateX(-50%);
+  z-index:6;pointer-events:none;
+  font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.55);
+  text-shadow:0 2px 6px rgba(0,0,0,.9);
+  opacity:0;transition:opacity .25s;
+}
+.auto-aviso.on{opacity:1}
+
+/* ============================================================
+   CAMPOS DE LOS PANELES
+   ============================================================ */
+.hoja.chica{max-width:420px}
+.campo{margin-bottom:18px}
+.campo-et{
+  display:block;
+  font-size:10px;letter-spacing:.26em;text-transform:uppercase;font-weight:600;
+  color:rgba(244,235,214,.45);margin-bottom:9px;
+}
+.campo-fila{display:flex;align-items:center;gap:12px}
+.campo-val{
+  flex:1;text-align:center;
+  font-family:'Share Tech Mono',monospace;
+  font-size:30px;color:var(--oro);
+  background:rgba(21,15,8,.7);border-radius:11px;padding:9px;
+}
+.redondo{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  background:var(--panel);border:1px solid var(--acero);
+  color:var(--crema);font-size:24px;cursor:pointer;font-family:inherit;
+  transition:border-color .2s,background .2s;
+}
+.redondo:hover:not(:disabled){border-color:var(--neon);background:rgba(255,122,24,.14)}
+.redondo:disabled{opacity:.3;cursor:not-allowed}
+.redondo.mas{border-color:rgba(79,191,122,.5);color:#7FE0A4}
+.redondo.mas:hover:not(:disabled){border-color:#4FBF7A;background:rgba(79,191,122,.16)}
+
+.limites{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:13px;color:rgba(244,235,214,.42);
+  padding:0 3px;margin-top:-8px;margin-bottom:16px;
+}
+.limites b{color:rgba(244,235,214,.7);font-family:'Share Tech Mono',monospace}
+
+.btn-max{
+  width:100%;
+  background:linear-gradient(180deg,#FFA24D 0%,var(--neon) 55%,#D45F00 100%);
+  border:0;border-radius:11px;padding:13px;
+  font-family:'Bungee',cursive;font-size:15px;color:#2B1200;
+  cursor:pointer;box-shadow:0 4px 0 #8A3D00;
+  transition:transform .08s,box-shadow .08s;
+}
+.btn-max:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #8A3D00}
+.btn-max:disabled{opacity:.45;cursor:not-allowed}
+
+/* opciones de cantidad */
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
+.opciones button{
+  background:rgba(21,15,8,.7);border:2px solid var(--acero);
+  border-radius:10px;padding:12px 6px;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:18px;
+  color:rgba(244,235,214,.75);
+  transition:border-color .2s,color .2s,background .2s;
+}
+.opciones button:hover{border-color:rgba(255,122,24,.6)}
+.opciones button.sel{border-color:var(--neon);color:var(--neon);background:rgba(255,122,24,.12)}
+
+.check{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 2px;cursor:pointer;
+  font-size:15px;color:rgba(244,235,214,.72);
+}
+.check input{
+  width:19px;height:19px;flex-shrink:0;cursor:pointer;
+  accent-color:var(--neon);
+}
+.check b{color:var(--oro);font-family:'Share Tech Mono',monospace}
+
 /* ============================================================
    PANEL DE INFORMACION
    ============================================================ */

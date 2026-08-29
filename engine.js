@@ -24,6 +24,11 @@
     TRAMOS: [[8, 9], [10, 11], [12, 24]],  // rangos de la tabla de pagos
     PROB_SCATTER: 0.020,      // solo en la caída inicial
     SCATTERS_PARA_GRATIS: 4,
+
+    /* El ídolo paga solo, en cualquier posición, además de
+       activar los giros gratis. Igual que el scatter de los
+       slots comerciales. Multiplica la apuesta. */
+    PAGOS_SCATTER: { 4: 3, 5: 5, 6: 100 },
     GIROS_GRATIS: 10,
     MAX_CASCADAS: 50,         // tope de seguridad contra bucles infinitos
 
@@ -35,7 +40,7 @@
        sin tocar la tabla de pagos ni la frecuencia de premio.
        Solo se sortea si la jugada ya ganó algo: nunca inventa
        un premio de la nada. */
-    PROB_MULT: 0.1169,        // 11,69% de las jugadas premiadas — calibrado para RTP 96%
+    PROB_MULT: 0.1144,        // 11,44% de las jugadas premiadas — calibrado para RTP 96%
     PROB_MULT_GRATIS: 0.30,   // más seguido en los giros gratis
     MULTIPLICADORES: [
       { v: 2, p: 35 }, { v: 3, p: 25 }, { v: 5, p: 18 }, { v: 8, p: 10 },
@@ -231,7 +236,16 @@
         grid = res.grid;
       }
 
-      pagoCascada = redondear(pagoCascada);
+      /* El ídolo paga aparte de las cascadas: se cuenta una sola
+         vez, sobre la caída inicial, y no participa en tumbles. */
+      var pagoScatter = 0;
+      if (scatters >= cfg.SCATTERS_PARA_GRATIS) {
+        var tope = Math.min(scatters, 6);
+        var tabla = cfg.PAGOS_SCATTER[tope];
+        if (tabla) pagoScatter = tabla * apuesta;
+      }
+
+      pagoCascada = redondear(pagoCascada + pagoScatter);
 
       /* El Ekeko solo aparece si la jugada ya ganó algo.
          Nunca crea un premio donde no lo había. */
@@ -249,6 +263,7 @@
         gridFinal: grid,
         pasos: pasos,
         scatters: scatters,
+        pagoScatter: redondear(pagoScatter),
         multTotal: multTotal,
         pagoCascada: pagoCascada,
         pagoTotal: pagoTotal,

@@ -398,13 +398,43 @@ probar('la cascada nunca se cuelga en un bucle infinito', function () {
   }
 });
 
-probar('la suma de los pasos coincide con el pago de cascada', function () {
+probar('la suma de los pasos + el ídolo coincide con el pago de cascada', function () {
   var m = INTI.crearMotor({ semilla: 333 });
   for (var i = 0; i < 20000; i++) {
     var r = m.girar(10);
     var suma = r.pasos.reduce(function (a, p) { return a + p.pago; }, 0);
-    cerca(suma, r.pagoCascada, 0.02, 'giro ' + i);
+    cerca(suma + r.pagoScatter, r.pagoCascada, 0.02, 'giro ' + i);
   }
+});
+
+probar('el ídolo paga según cuántos salgan', function () {
+  var m = INTI.crearMotor({ semilla: 42, config: { PROB_SCATTER: 0.35 } });
+  var tabla = INTI.CONFIG.PAGOS_SCATTER;
+  var vistos = {};
+  for (var i = 0; i < 30000; i++) {
+    var r = m.girar(10);
+    if (r.scatters < 4) {
+      igual(r.pagoScatter, 0, 'con menos de 4 no debe pagar');
+    } else {
+      var tope = Math.min(r.scatters, 6);
+      igual(r.pagoScatter, INTI.redondear(tabla[tope] * 10), 'con ' + r.scatters + ' ídolos');
+      vistos[tope] = true;
+    }
+  }
+  cierto(vistos[4] && vistos[5] && vistos[6], 'preparación: faltó ver algún tramo');
+});
+
+probar('el pago del ídolo escala con la apuesta', function () {
+  var a = INTI.crearMotor({ semilla: 77, config: { PROB_SCATTER: 0.35 } });
+  var b = INTI.crearMotor({ semilla: 77, config: { PROB_SCATTER: 0.35 } });
+  for (var i = 0; i < 300; i++) {
+    var r1 = a.girar(1), r2 = b.girar(50);
+    if (r1.pagoScatter > 0) {
+      cerca(r2.pagoScatter, r1.pagoScatter * 50, 0.02, 'apuesta 50 = 50 veces la de 1');
+      return;
+    }
+  }
+  throw new Error('no salió ningún ídolo pagando');
 });
 
 probar('el mismo motor con la misma semilla da el mismo resultado', function () {

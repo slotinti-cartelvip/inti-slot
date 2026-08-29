@@ -11,7 +11,11 @@
 (function () {
   'use strict';
 
-  var APUESTAS = [1, 5, 10, 25, 50];
+  /* Escalera de apuestas. El límite de mesa es el tope duro:
+     ningún jugador puede apostar más, tenga los créditos que tenga.
+     En un casino real este número lo fija el operador. */
+  var APUESTAS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+  var LIMITE_MESA = 500;
   var CREDITOS_INICIALES = 1000;
 
   /* ============================================================
@@ -34,6 +38,7 @@
     caidaCascada: 300,
     mostrarTotal: 900,
     entreGirosGratis: 1200,
+    entreAutomaticos: 550,
 
     /* --- coreografía del multiplicador --- */
     antesDelOrbe: 700,        // el Ekeko toma impulso antes de que baje
@@ -61,6 +66,13 @@
   var sonido = true;
   var girosGratisRestantes = 0;
   var acumuladoGratis = 0;
+
+  /* ---------- tiros automáticos ---------- */
+  var CANTIDADES_AUTO = [10, 25, 50, 100, 250, 500];
+  var UMBRAL_PREMIO = 50;          // veces la apuesta
+  var autoRestantes = 0;
+  var autoConfig = { pararGratis: true, pararPremio: false };
+  var autoCantidad = 25;
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -517,10 +529,36 @@
     ocupado = false;
     saltar = false;
     bloquear(false);
+    pintarApuesta();
 
+    /* --- encadenar el siguiente giro --- */
     if (girosGratisRestantes > 0) {
       await espera(TIEMPOS.entreGirosGratis);
       jugar();
+      return;
+    }
+
+    if (autoRestantes > 0 && !esGratis) {
+      autoRestantes--;
+
+      // condiciones de parada, en orden de importancia
+      if (creditos < APUESTAS[idxApuesta]) {
+        detenerAuto('Automático detenido: créditos insuficientes.');
+      } else if (autoConfig.pararGratis && resultado.activaGratis) {
+        detenerAuto('Automático detenido: se activaron giros gratis.');
+      } else if (autoConfig.pararPremio &&
+                 resultado.pagoTotal / apuesta >= UMBRAL_PREMIO) {
+        detenerAuto('Automático detenido: premio de ' +
+                    Math.round(resultado.pagoTotal / apuesta) + '× la apuesta.');
+      } else if (autoRestantes > 0) {
+        pintarAuto();
+        await espera(TIEMPOS.entreAutomaticos);
+        jugar();
+        return;
+      } else {
+        detenerAuto('Tiros automáticos terminados.');
+      }
+      pintarAuto();
     }
   }
 
@@ -542,10 +580,50 @@
     $('spin').classList.toggle('gratis', gratis);
   }
 
+  /* La apuesta tiene tres topes: la escalera, el límite de mesa
+     y los créditos que el jugador tenga en ese momento. Manda el
+     más bajo de los tres. */
+  function apuestaMaximaPosible() {
+    var tope = 0;
+    for (var i = 0; i < APUESTAS.length; i++) {
+      if (APUESTAS[i] <= LIMITE_MESA && APUESTAS[i] <= creditos) tope = i;
+    }
+    return tope;
+  }
+
   function cambiarApuesta(d) {
-    if (ocupado || girosGratisRestantes > 0) return;
-    idxApuesta = Math.min(APUESTAS.length - 1, Math.max(0, idxApuesta + d));
-    $('betAmount').textContent = APUESTAS[idxApuesta];
+    if (ocupado || girosGratisRestantes > 0 || autoRestantes > 0) return;
+    var nuevo = idxApuesta + d;
+    var maxIdx = apuestaMaximaPosible();
+    if (nuevo < 0) nuevo = 0;
+    if (nuevo > maxIdx) nuevo = maxIdx;
+    idxApuesta = nuevo;
+    pintarApuesta();
+  }
+
+  function pintarApuesta() {
+    var v = APUESTAS[idxApuesta];
+    $('betAmount').textContent = v;
+    var campo = $('betValor');
+    if (campo) campo.textContent = v;
+
+    var maxIdx = apuestaMaximaPosible();
+    var bloqueado = ocupado || girosGratisRestantes > 0 || autoRestantes > 0;
+    $('betDown').disabled = bloqueado || idxApuesta <= 0;
+    $('betUp').disabled   = bloqueado || idxApuesta >= maxIdx;
+    var bmax = $('apuestaMax');
+    if (bmax) bmax.disabled = bloqueado || idxApuesta >= maxIdx;
+
+    var lim = $('limites');
+    if (lim) {
+      lim.innerHTML =
+        '<span>Mínimo <b>' + APUESTAS[0] + '</b></span>' +
+        '<span>Límite de mesa <b>' + LIMITE_MESA + '</b></span>' +
+        '<span>Tu máximo <b>' + APUESTAS[maxIdx] + '</b></span>';
+    }
+    if (campo) {
+      campo.textContent = v;
+    }
   }
 
   /* ============================================================
@@ -583,15 +661,21 @@
         '<span>' + s.nombre + '</span>' +
         '<span class="nums">' + s.pagos[0] + '× / ' + s.pagos[1] + '× / ' + s.pagos[2] + '×</span></div>';
     });
+    var ps = motor.cfg.PAGOS_SCATTER;
     filas.push('<div class="ptrow">' + arte.SCATTER + '<span>Ídolo</span>' +
-      '<span class="nums">4+ = ' + motor.cfg.GIROS_GRATIS + ' gratis</span></div>');
+      '<span class="nums">4 = ' + ps[4] + '× / 5 = ' + ps[5] + '× / 6+ = ' + ps[6] + '×<br>' +
+      'y ' + motor.cfg.GIROS_GRATIS + ' giros gratis</span></div>');
     $('paytable').innerHTML = filas.join('');
   }
 
   /* ============================================================
      ARRANQUE
      ============================================================ */
-  $('spin').addEventListener('click', jugar);
+  $('spin').addEventListener('click', function () {
+    // si el automático está corriendo, el botón lo corta
+    if (autoRestantes > 0) { detenerAuto('Automático detenido.'); return; }
+    jugar();
+  });
   $('betUp').addEventListener('click', function () { cambiarApuesta(1); });
   $('betDown').addEventListener('click', function () { cambiarApuesta(-1); });
 
@@ -611,6 +695,96 @@
     e.target.textContent = 'Sonido: ' + (sonido ? 'activado' : 'apagado');
   });
 
+  /* ============================================================
+     TIROS AUTOMÁTICOS
+     ------------------------------------------------------------
+     Se detiene solo en cuatro casos: se acabaron los giros, se
+     acabaron los créditos, se activaron giros gratis, o el premio
+     pasó el umbral. Los dos últimos son opcionales.
+
+     Que se pueda cortar en cualquier momento no es un detalle:
+     es requisito de juego responsable en toda jurisdicción.
+     ============================================================ */
+  function pintarAuto() {
+    var chip = $('abrirAuto');
+    var aviso = $('autoAviso');
+    if (autoRestantes > 0) {
+      $('autoEstado').textContent = autoRestantes;
+      chip.classList.add('on');
+      aviso.textContent = 'Tiros automáticos restantes ' + autoRestantes;
+      aviso.classList.add('on');
+    } else {
+      $('autoEstado').textContent = 'OFF';
+      chip.classList.remove('on');
+      aviso.classList.remove('on');
+    }
+  }
+
+  function detenerAuto(motivo) {
+    if (autoRestantes <= 0) return;
+    autoRestantes = 0;
+    pintarAuto();
+    pintarApuesta();
+    if (motivo) mensaje(motivo, 'free');
+  }
+
+  function iniciarAuto() {
+    autoConfig.pararGratis = $('pararGratis').checked;
+    autoConfig.pararPremio = $('pararPremio').checked;
+    autoRestantes = autoCantidad;
+    cerrarTodo();
+    pintarAuto();
+    pintarApuesta();
+    jugar();
+  }
+
+  function pintarOpcionesAuto() {
+    $('opcionesAuto').innerHTML = CANTIDADES_AUTO.map(function (n) {
+      return '<button data-n="' + n + '"' + (n === autoCantidad ? ' class="sel"' : '') + '>' + n + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('opcionesAuto').querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () {
+        autoCantidad = parseInt(b.dataset.n, 10);
+        pintarOpcionesAuto();
+      });
+    });
+  }
+
+  /* ---------- paneles ---------- */
+  function cerrarTodo() {
+    $('modal').hidden = true;
+    $('modalApuesta').hidden = true;
+    $('modalAuto').hidden = true;
+  }
+
+  $('abrirApuesta').addEventListener('click', function () {
+    if (ocupado || girosGratisRestantes > 0 || autoRestantes > 0) return;
+    pintarApuesta();
+    $('modalApuesta').hidden = false;
+  });
+  $('cerrarApuesta').addEventListener('click', function () { $('modalApuesta').hidden = true; });
+  $('modalApuesta').addEventListener('click', function (e) {
+    if (e.target === $('modalApuesta')) $('modalApuesta').hidden = true;
+  });
+  $('apuestaMax').addEventListener('click', function () {
+    if (ocupado || girosGratisRestantes > 0 || autoRestantes > 0) return;
+    idxApuesta = apuestaMaximaPosible();
+    pintarApuesta();
+  });
+
+  $('abrirAuto').addEventListener('click', function () {
+    if (autoRestantes > 0) { detenerAuto('Automático detenido.'); return; }
+    if (ocupado || girosGratisRestantes > 0) return;
+    $('umbralTxt').textContent = UMBRAL_PREMIO;
+    pintarOpcionesAuto();
+    $('modalAuto').hidden = false;
+  });
+  $('cerrarAuto').addEventListener('click', function () { $('modalAuto').hidden = true; });
+  $('modalAuto').addEventListener('click', function (e) {
+    if (e.target === $('modalAuto')) $('modalAuto').hidden = true;
+  });
+  $('iniciarAuto').addEventListener('click', iniciarAuto);
+
   /* ---------- panel de información ---------- */
   function abrirInfo() {
     var f = document.getElementById('fichaRtp');
@@ -625,7 +799,7 @@
     if (e.target === $('modal')) cerrarInfo();   // clic fuera de la hoja
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') cerrarInfo();
+    if (e.key === 'Escape') cerrarTodo();
   });
 
   document.addEventListener('keydown', function (e) {
@@ -637,6 +811,9 @@
   });
 
   pintarTabla();
+  pintarApuesta();
+  pintarAuto();
+  pintarOpcionesAuto();
   pintar(motor._.nuevaGrid(false), null);
 
 })();

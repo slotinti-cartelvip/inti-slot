@@ -36,6 +36,7 @@
       </div>
 
       <div class="skiphint" id="skiphint">Toca para saltar</div>
+      <div class="auto-aviso" id="autoAviso"></div>
     </div>
 
     <!-- BARRA DE MANDO: cr&eacute;ditos a la izquierda, giro al centro, apuesta a la derecha -->
@@ -62,12 +63,14 @@
       </button>
 
       <div class="lado der">
-        <span class="et">Apuesta</span>
-        <div class="apuesta">
-          <button id="betDown" aria-label="Bajar apuesta">&minus;</button>
+        <button class="chip" id="abrirApuesta">
+          <span class="et">Apuesta</span>
           <span class="nu" id="betAmount">10</span>
-          <button id="betUp" aria-label="Subir apuesta">+</button>
-        </div>
+        </button>
+        <button class="chip auto" id="abrirAuto" aria-label="Tiros autom&aacute;ticos">
+          <span class="et">Autom&aacute;tico</span>
+          <span class="nu" id="autoEstado">OFF</span>
+        </button>
       </div>
 
     </div>
@@ -107,7 +110,7 @@
         <li>Con <b>8 iguales o m&aacute;s</b> pagas. Cuantos m&aacute;s salgan, mayor el multiplicador.</li>
         <li>Los s&iacute;mbolos que pagan desaparecen y caen otros encima. Cada ca&iacute;da encadenada sube el <b>combo</b>.</li>
         <li>Si tu jugada gana, el <b>Ekeko</b> a veces aparece y multiplica todo lo ganado en esa secuencia &mdash; no pasa siempre, por eso vale la pena cuando sucede.</li>
-        <li>Con <b>4 &iacute;dolos o m&aacute;s</b> se activan 10 giros gratis.</li>
+        <li>El <b>&iacute;dolo</b> paga solo, en cualquier posici&oacute;n: 4 pagan 3&times;, 5 pagan 5&times;, 6 o m&aacute;s pagan 100&times; la apuesta. Adem&aacute;s activan 10 giros gratis.</li>
         <li>Toca el tablero para saltar la animaci&oacute;n. El resultado no cambia.</li>
       </ul>
 
@@ -126,6 +129,60 @@
         <button id="recharge">Recargar cr&eacute;ditos</button>
         <button id="soundToggle">Sonido: activado</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PANEL DE APUESTA ============ -->
+<div class="modal" id="modalApuesta" hidden>
+  <div class="hoja chica" role="dialog" aria-modal="true" aria-labelledby="titApuesta">
+    <div class="hoja-top">
+      <h2 id="titApuesta">Apuesta</h2>
+      <button class="cerrar" id="cerrarApuesta" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="hoja-cuerpo">
+      <div class="campo">
+        <span class="campo-et">Valor por giro</span>
+        <div class="campo-fila">
+          <button class="redondo" id="betDown" aria-label="Bajar apuesta">&minus;</button>
+          <span class="campo-val" id="betValor">10</span>
+          <button class="redondo mas" id="betUp" aria-label="Subir apuesta">+</button>
+        </div>
+      </div>
+      <div class="limites" id="limites"></div>
+      <button class="btn-max" id="apuestaMax">Apuesta m&aacute;xima</button>
+      <p class="aviso">La apuesta no puede superar tus cr&eacute;ditos ni el l&iacute;mite de la mesa.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PANEL DE TIROS AUTOM&Aacute;TICOS ============ -->
+<div class="modal" id="modalAuto" hidden>
+  <div class="hoja chica" role="dialog" aria-modal="true" aria-labelledby="titAuto">
+    <div class="hoja-top">
+      <h2 id="titAuto">Tiros autom&aacute;ticos</h2>
+      <button class="cerrar" id="cerrarAuto" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="hoja-cuerpo">
+      <div class="campo">
+        <span class="campo-et">Cantidad de giros</span>
+        <div class="opciones" id="opcionesAuto"></div>
+      </div>
+
+      <div class="campo">
+        <span class="campo-et">Detener si&hellip;</span>
+        <label class="check">
+          <input type="checkbox" id="pararGratis" checked>
+          <span>se activan giros gratis</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="pararPremio">
+          <span>gano m&aacute;s de <b id="umbralTxt">50</b> veces la apuesta</span>
+        </label>
+      </div>
+
+      <button class="btn-max" id="iniciarAuto">Iniciar</button>
+      <p class="aviso">Se detiene solo si te quedas sin cr&eacute;ditos. Puedes cortarlo cuando quieras.</p>
     </div>
   </div>
 </div>
